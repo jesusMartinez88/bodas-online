@@ -7,7 +7,6 @@
     "dev": "ng serve --configuration development",
     "build": "ng build",
     "build:prod": "ng build --configuration production --base-href /boda-judith-jesus/",
-    "deploy": "ng deploy --repo=https://github.com/jesusMartinez88/boda-judith-jesus.git --base-href=/boda-judith-jesus/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:security": "vitest run src/app/services/auth-security.spec.ts src/app/services/security-headers.spec.ts",

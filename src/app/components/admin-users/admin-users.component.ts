@@ -398,7 +398,7 @@ export class AdminUsersComponent implements OnInit {
    */
   parseOurStoryEntries(
     value: string | null | undefined,
-  ): Array<{ url: string; caption: string }> | null {
+  ): { url: string; caption: string }[] | null {
     if (!value) return null;
     try {
       const parsed = JSON.parse(value);
