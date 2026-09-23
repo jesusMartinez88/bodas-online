@@ -146,6 +146,25 @@ export class AuthService {
   }
 
   /**
+   * Cambia la contraseña del usuario autenticado.
+   * El backend exige la contraseña actual antes de aplicar el cambio,
+   * igual que en `updateMyEmail` (defensa anti-JWT-robado).
+   *
+   * Devuelve `{ success, message }` en ambos casos (éxito o 401).
+   * Si la contraseña actual no coincide, el backend responde 401 y
+   * Angular propaga un `HttpErrorResponse` con `error.message`.
+   */
+  changeMyPassword(payload: {
+    currentPassword: string;
+    newPassword: string;
+  }): Observable<{ success: boolean; message: string }> {
+    return this.http.patch<{ success: boolean; message: string }>(
+      `${this.baseUrl}/api/auth/me/password`,
+      payload,
+    );
+  }
+
+  /**
    * Actualiza el email del usuario autenticado.
    * Requiere la contraseña actual como medida anti-JWT-robado
    * (el backend la valida antes de aplicar el cambio).

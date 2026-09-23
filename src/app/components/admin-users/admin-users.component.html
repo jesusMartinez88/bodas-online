@@ -25,15 +25,26 @@
           </span>
         }
       </div>
-      <button
-        type="button"
-        class="btn btn--ghost logout-btn"
-        (click)="logout()"
-        aria-label="Cerrar sesión"
-        title="Cerrar sesión"
-      >
-        🚪 Cerrar sesión
-      </button>
+      <div class="header-actions__buttons">
+        <button
+          type="button"
+          class="btn btn--ghost"
+          (click)="openAccountDialog()"
+          aria-label="Mi cuenta"
+          title="Cambiar mi contraseña o email"
+        >
+          ⚙️ Mi cuenta
+        </button>
+        <button
+          type="button"
+          class="btn btn--ghost logout-btn"
+          (click)="logout()"
+          aria-label="Cerrar sesión"
+          title="Cerrar sesión"
+        >
+          🚪 Cerrar sesión
+        </button>
+      </div>
     </div>
   </header>
 
@@ -578,6 +589,238 @@
           class="btn btn--ghost"
           (click)="closeQuestionnaire()"
           [disabled]="questionnaireLoading()"
+        >
+          Cerrar
+        </button>
+      </footer>
+    </div>
+  </div>
+}
+
+@if (accountDialogOpen()) {
+  <div
+    class="modal-overlay"
+    role="presentation"
+    tabindex="-1"
+    (keydown.escape)="closeAccountDialog()"
+  >
+    <div
+      class="modal modal--account"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="account-title"
+    >
+      <header class="modal-header modal-header--account">
+        <div class="modal-header__text">
+          <h2 id="account-title">⚙️ Mi cuenta</h2>
+          <p class="modal-header__subtitle">
+            Gestiona tu email y contraseña de acceso
+          </p>
+        </div>
+        <button
+          type="button"
+          class="modal-close"
+          (click)="closeAccountDialog()"
+          [disabled]="accountSaving()"
+          aria-label="Cerrar"
+        >
+          ✕
+        </button>
+      </header>
+
+      <div class="modal-body">
+        @if (accountError(); as msg) {
+          <div class="alert alert--error" role="alert">
+            <span class="alert__icon" aria-hidden="true">⚠️</span>
+            <span class="alert__text">{{ msg }}</span>
+          </div>
+        }
+
+        <section class="account-section" aria-labelledby="account-email-heading">
+          <header class="account-section__header">
+            <span class="account-section__icon" aria-hidden="true">📧</span>
+            <div class="account-section__heading">
+              <h3 id="account-email-heading" class="account-section__title">
+                Cambiar email
+              </h3>
+              <p class="account-section__subtitle">
+                Actualiza la dirección con la que recibes los códigos de recuperación.
+              </p>
+            </div>
+          </header>
+
+          @if (emailSuccess(); as msg) {
+            <div class="alert alert--success" role="status">
+              <span class="alert__icon" aria-hidden="true">✅</span>
+              <span class="alert__text">{{ msg }}</span>
+            </div>
+          }
+
+          <div class="email-current">
+            <span class="email-current__label">Email actual</span>
+            <span class="email-current__chip" [class.email-current__chip--empty]="!accountCurrentEmail()">
+              {{ accountCurrentEmail() ?? '— sin email configurado —' }}
+            </span>
+          </div>
+
+          <form (ngSubmit)="submitEmailChange()" class="account-form">
+            <div class="form-group">
+              <label for="account-new-email">Nuevo email</label>
+              <div class="input-row">
+                <span class="input-row__icon" aria-hidden="true">📧</span>
+                <input
+                  id="account-new-email"
+                  type="email"
+                  autocomplete="email"
+                  [ngModel]="accountNewEmail()"
+                  (ngModelChange)="accountNewEmail.set($event)"
+                  name="newEmail"
+                  placeholder="tu@email.com"
+                  [disabled]="accountSaving()"
+                  required
+                />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="account-email-password">Confirma con tu contraseña actual</label>
+              <div class="password-row">
+                <div class="input-row">
+                  <span class="input-row__icon" aria-hidden="true">🔒</span>
+                  <input
+                    id="account-email-password"
+                    [type]="accountEmailShowPassword() ? 'text' : 'password'"
+                    autocomplete="current-password"
+                    [ngModel]="accountEmailPassword()"
+                    (ngModelChange)="accountEmailPassword.set($event)"
+                    name="currentPasswordEmail"
+                    [disabled]="accountSaving()"
+                    required
+                  />
+                </div>
+                <button
+                  type="button"
+                  class="btn btn--icon"
+                  (click)="toggleAccountEmailPassword()"
+                  [disabled]="accountSaving()"
+                  [attr.aria-label]="accountEmailShowPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                  [title]="accountEmailShowPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                >
+                  {{ accountEmailShowPassword() ? '🙈' : '👁' }}
+                </button>
+              </div>
+            </div>
+            <div class="account-form__actions">
+              <button
+                type="submit"
+                class="btn btn--primary"
+                [disabled]="accountSaving()"
+              >
+                {{ accountSaving() ? 'Guardando…' : 'Actualizar email' }}
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="account-section" aria-labelledby="account-password-heading">
+          <header class="account-section__header">
+            <span class="account-section__icon" aria-hidden="true">🔒</span>
+            <div class="account-section__heading">
+              <h3 id="account-password-heading" class="account-section__title">
+                Cambiar contraseña
+              </h3>
+              <p class="account-section__subtitle">
+                Usa al menos 8 caracteres. No la reutilices de otros servicios.
+              </p>
+            </div>
+          </header>
+
+          @if (passwordSuccess(); as msg) {
+            <div class="alert alert--success" role="status">
+              <span class="alert__icon" aria-hidden="true">✅</span>
+              <span class="alert__text">{{ msg }}</span>
+            </div>
+          }
+
+          <form (ngSubmit)="submitPasswordChange()" class="account-form">
+            <div class="form-group">
+              <label for="account-current-password">Contraseña actual</label>
+              <div class="input-row">
+                <span class="input-row__icon" aria-hidden="true">🔑</span>
+                <input
+                  id="account-current-password"
+                  [type]="accountPasswordShowCurrent() ? 'text' : 'password'"
+                  autocomplete="current-password"
+                  [ngModel]="accountCurrentPassword()"
+                  (ngModelChange)="accountCurrentPassword.set($event)"
+                  name="currentPassword"
+                  [disabled]="accountSaving()"
+                  required
+                />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="account-new-password">Nueva contraseña</label>
+              <div class="input-row">
+                <span class="input-row__icon" aria-hidden="true">🆕</span>
+                <input
+                  id="account-new-password"
+                  [type]="accountPasswordShowNew() ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  [ngModel]="accountNewPassword()"
+                  (ngModelChange)="accountNewPassword.set($event)"
+                  name="newPassword"
+                  minlength="8"
+                  [disabled]="accountSaving()"
+                  required
+                />
+              </div>
+              <small class="form-hint">Mínimo 8 caracteres.</small>
+            </div>
+            <div class="form-group">
+              <label for="account-confirm-password">Repite la nueva contraseña</label>
+              <div class="input-row">
+                <span class="input-row__icon" aria-hidden="true">✅</span>
+                <input
+                  id="account-confirm-password"
+                  [type]="accountPasswordShowNew() ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  [ngModel]="accountConfirmPassword()"
+                  (ngModelChange)="accountConfirmPassword.set($event)"
+                  name="confirmPassword"
+                  [disabled]="accountSaving()"
+                  required
+                />
+              </div>
+            </div>
+            <div class="account-form__extras">
+              <button
+                type="button"
+                class="btn btn--link"
+                (click)="toggleAccountPasswordVisibility()"
+                [disabled]="accountSaving()"
+              >
+                {{ accountPasswordShowNew() ? '🙈 Ocultar contraseñas' : '👁 Mostrar contraseñas' }}
+              </button>
+            </div>
+            <div class="account-form__actions">
+              <button
+                type="submit"
+                class="btn btn--primary"
+                [disabled]="accountSaving()"
+              >
+                {{ accountSaving() ? 'Guardando…' : 'Actualizar contraseña' }}
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <footer class="modal-footer modal-footer--account">
+        <button
+          type="button"
+          class="btn btn--ghost"
+          (click)="closeAccountDialog()"
+          [disabled]="accountSaving()"
         >
           Cerrar
         </button>

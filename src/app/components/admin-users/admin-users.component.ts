@@ -15,6 +15,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AdminService, VisitStats } from '../../services/admin.service';
+import { AuthService } from '../../services/auth.service';
 import {
   AdminUser,
   AdminUserPatch,
@@ -41,6 +42,7 @@ interface EditFormState {
 })
 export class AdminUsersComponent implements OnInit {
   private adminService = inject(AdminService);
+  private authService = inject(AuthService);
   private platformId = inject(PLATFORM_ID);
   protected exitConfirmService = inject(ExitConfirmService);
   private versionService = inject(VersionService);
@@ -73,6 +75,27 @@ export class AdminUsersComponent implements OnInit {
   questionnaire = signal<LandingQuestionnaire | null>(null);
   questionnaireLoading = signal<boolean>(false);
   questionnaireError = signal<string | null>(null);
+
+  // Modal "Mi cuenta": cambio de email y contraseña del propio admin.
+  // Usa los mismos endpoints que el usuario normal (/api/auth/me/*) —
+  // el admin se gestiona a sí mismo desde aquí.
+  accountDialogOpen = signal<boolean>(false);
+  accountSaving = signal<boolean>(false);
+  accountError = signal<string | null>(null);
+
+  accountCurrentEmail = signal<string | null>(null);
+
+  accountNewEmail = signal<string>('');
+  accountEmailPassword = signal<string>('');
+  accountEmailShowPassword = signal<boolean>(false);
+  emailSuccess = signal<string | null>(null);
+
+  accountCurrentPassword = signal<string>('');
+  accountNewPassword = signal<string>('');
+  accountConfirmPassword = signal<string>('');
+  accountPasswordShowCurrent = signal<boolean>(false);
+  accountPasswordShowNew = signal<boolean>(false);
+  passwordSuccess = signal<string | null>(null);
 
   protected readonly appVersion = this.versionService.getFullVersion();
 
@@ -325,6 +348,162 @@ export class AdminUsersComponent implements OnInit {
     if (!this.canOpenInvitation(user)) return;
     if (!isPlatformBrowser(this.platformId)) return;
     window.open(`/${user.slug}`, '_blank', 'noopener,noreferrer');
+  }
+
+  /**
+   * Abre el modal "Mi cuenta" y precarga el email actual desde el backend.
+   * Si la carga falla, el modal igualmente se abre (con email "—") para que
+   * el admin pueda cambiar su contraseña aunque no se pueda mostrar el email.
+   */
+  openAccountDialog() {
+    this.resetAccountForm();
+    this.accountDialogOpen.set(true);
+    this.authService.fetchMyProfile().subscribe({
+      next: (res) => {
+        if (res?.user?.email !== undefined) {
+          this.accountCurrentEmail.set(res.user.email ?? null);
+        }
+      },
+      error: () => {
+        // No bloqueamos el modal: si falla, el admin aún puede cambiar la
+        // contraseña, y el email simplemente aparecerá como "—".
+      },
+    });
+  }
+
+  closeAccountDialog() {
+    if (this.accountSaving()) return;
+    this.accountDialogOpen.set(false);
+    this.resetAccountForm();
+  }
+
+  private resetAccountForm() {
+    this.accountError.set(null);
+    this.emailSuccess.set(null);
+    this.passwordSuccess.set(null);
+    this.accountNewEmail.set('');
+    this.accountEmailPassword.set('');
+    this.accountEmailShowPassword.set(false);
+    this.accountCurrentPassword.set('');
+    this.accountNewPassword.set('');
+    this.accountConfirmPassword.set('');
+    this.accountPasswordShowCurrent.set(false);
+    this.accountPasswordShowNew.set(false);
+  }
+
+  toggleAccountEmailPassword() {
+    this.accountEmailShowPassword.update((v) => !v);
+  }
+
+  toggleAccountPasswordVisibility() {
+    const next = !this.accountPasswordShowNew();
+    this.accountPasswordShowNew.set(next);
+    this.accountPasswordShowCurrent.set(next);
+  }
+
+  /**
+   * Envía el cambio de email del propio admin. El backend exige la
+   * contraseña actual (defensa contra token robado), igual que en
+   * `SettingsComponent`. Email vacío = borrar.
+   */
+  submitEmailChange() {
+    this.emailSuccess.set(null);
+    this.accountError.set(null);
+
+    const newEmail = this.accountNewEmail().trim();
+    const currentPassword = this.accountEmailPassword();
+
+    if (!newEmail) {
+      this.accountError.set('Introduce un email o déjalo vacío para eliminarlo.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      this.accountError.set('El formato del email no es válido.');
+      return;
+    }
+
+    if (newEmail === (this.accountCurrentEmail() ?? '')) {
+      this.accountError.set('El nuevo email es igual al actual.');
+      return;
+    }
+
+    if (!currentPassword) {
+      this.accountError.set('Introduce tu contraseña actual para confirmar el cambio.');
+      return;
+    }
+
+    this.accountSaving.set(true);
+
+    this.authService.updateMyEmail({ email: newEmail, currentPassword }).subscribe({
+      next: (res) => {
+        this.accountSaving.set(false);
+        this.emailSuccess.set(res.message || 'Email actualizado correctamente.');
+        this.accountCurrentEmail.set(res.data?.email ?? null);
+        this.accountNewEmail.set('');
+        this.accountEmailPassword.set('');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.accountSaving.set(false);
+        const body = err.error as { message?: string } | null;
+        this.accountError.set(
+          body?.message ||
+            'No se pudo actualizar el email. Inténtalo de nuevo más tarde.',
+        );
+      },
+    });
+  }
+
+  /**
+   * Envía el cambio de contraseña del propio admin. Mismas reglas que
+   * `PATCH /api/auth/me/password` en el backend: la contraseña actual
+   * debe coincidir y la nueva debe tener ≥ 8 caracteres.
+   */
+  submitPasswordChange() {
+    this.passwordSuccess.set(null);
+    this.accountError.set(null);
+
+    const current = this.accountCurrentPassword();
+    const next = this.accountNewPassword();
+    const confirm = this.accountConfirmPassword();
+
+    if (!current || !next || !confirm) {
+      this.accountError.set('Rellena los tres campos de contraseña.');
+      return;
+    }
+    if (next.length < 8) {
+      this.accountError.set('La nueva contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+    if (next !== confirm) {
+      this.accountError.set('La nueva contraseña y su repetición no coinciden.');
+      return;
+    }
+    if (current === next) {
+      this.accountError.set('La nueva contraseña es igual a la actual.');
+      return;
+    }
+
+    this.accountSaving.set(true);
+
+    this.authService.changeMyPassword({ currentPassword: current, newPassword: next }).subscribe({
+      next: (res) => {
+        this.accountSaving.set(false);
+        this.passwordSuccess.set(res.message || 'Contraseña actualizada correctamente.');
+        this.accountCurrentPassword.set('');
+        this.accountNewPassword.set('');
+        this.accountConfirmPassword.set('');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.accountSaving.set(false);
+        const body = err.error as { message?: string } | null;
+        this.accountError.set(
+          body?.message ||
+            'No se pudo actualizar la contraseña. Inténtalo de nuevo más tarde.',
+        );
+      },
+    });
   }
 
   /**
