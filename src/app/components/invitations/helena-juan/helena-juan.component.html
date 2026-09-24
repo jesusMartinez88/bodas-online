@@ -2,7 +2,8 @@
   <app-hero [coverUrl]="coverUrl()" />
 
   <section id="gallery" class="section bg-light">
-    <app-gallery [galleryUrls]="galleryUrls()" />
+    <app-gallery />
+    <!-- <app-gallery [galleryUrls]="galleryUrls()" /> -->
   </section>
 
   <section id="timeline" class="section">
@@ -23,5 +24,7 @@
   <app-gifts />
   <app-calendar />
   <app-invitation-footer />
-  <app-music-player user="helena-juan" song="background-music.mp3" />
+  <app-music-player
+    user="helena-juan"
+    song="background-music.mp3" />
 </div>

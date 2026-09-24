@@ -98,7 +98,7 @@ export class GalleryComponent implements AfterViewInit, OnDestroy {
   ];
 
   readonly visibleSliderImages = computed(() =>
-    this.galleryUrls().length ? this.galleryUrls() : this.sliderImages,
+    this.sliderImages,
   );
 
   selectedPhoto = signal<Photo | null>(null);

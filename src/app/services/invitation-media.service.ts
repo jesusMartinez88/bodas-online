@@ -6,6 +6,7 @@ import { environment } from '../../environments/environment';
 export interface InvitationMedia {
   coverUrl: string | null;
   galleryUrls: string[];
+  musicUrl: string | null;
 }
 
 interface ApiResponse<T> {
@@ -64,6 +65,7 @@ export class InvitationMediaService {
     return {
       coverUrl: media.coverUrl ? this.absoluteUrl(media.coverUrl) : null,
       galleryUrls: media.galleryUrls.map((url) => this.absoluteUrl(url)),
+      musicUrl: media.musicUrl ? this.absoluteUrl(media.musicUrl) : null,
     };
   }
 

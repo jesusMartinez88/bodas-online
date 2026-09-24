@@ -320,6 +320,28 @@
           <small class="form-hint">Solo el admin puede ver y editar este campo.</small>
         </div>
 
+        <div class="form-group">
+          <label [for]="'music-' + user.id">Música de fondo</label>
+          <input
+            [id]="'music-' + user.id"
+            type="file"
+            accept=".mp3,audio/mpeg,audio/mp3"
+            (change)="uploadMusic(user.id, $event)"
+            [disabled]="musicUploading() || isSaving()">
+          <small class="form-hint">
+            Se guardará como la música de {{ user.username }}. Máximo 20 MB.
+          </small>
+          @if (musicUploading()) {
+            <small class="form-hint" role="status">Subiendo canción…</small>
+          }
+          @if (musicSuccess(); as message) {
+            <small class="form-hint form-hint--success" role="status">{{ message }}</small>
+          }
+          @if (musicError(); as message) {
+            <small class="form-hint form-hint--error" role="alert">{{ message }}</small>
+          }
+        </div>
+
         <footer class="modal-footer">
           <button
             type="button"

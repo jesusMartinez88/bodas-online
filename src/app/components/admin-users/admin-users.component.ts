@@ -65,6 +65,9 @@ export class AdminUsersComponent implements OnInit {
     notes: '',
   });
   isSaving = signal<boolean>(false);
+  musicUploading = signal<boolean>(false);
+  musicError = signal<string | null>(null);
+  musicSuccess = signal<string | null>(null);
 
   confirmingDelete = signal<AdminUser | null>(null);
   isDeleting = signal<boolean>(false);
@@ -174,6 +177,8 @@ export class AdminUsersComponent implements OnInit {
   openEditDialog(user: AdminUser) {
     if (user.isProtected) return;
     this.actionError.set(null);
+    this.musicError.set(null);
+    this.musicSuccess.set(null);
     this.editingUser.set(user);
     this.editForm.set({
       email: user.email ?? '',
@@ -184,9 +189,41 @@ export class AdminUsersComponent implements OnInit {
   }
 
   closeEditDialog() {
-    if (this.isSaving()) return;
+    if (this.isSaving() || this.musicUploading()) return;
     this.editingUser.set(null);
     this.actionError.set(null);
+  }
+
+  uploadMusic(userId: number, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.item(0) ?? null;
+    input.value = '';
+    this.musicError.set(null);
+    this.musicSuccess.set(null);
+    if (!file) return;
+
+    if (file.size > 20 * 1024 * 1024) {
+      this.musicError.set('La canción no puede superar los 20 MB.');
+      return;
+    }
+    const isMp3Mime = file.type === 'audio/mpeg' || file.type === 'audio/mp3';
+    const hasMp3Extension = file.name.toLowerCase().endsWith('.mp3');
+    if (!isMp3Mime && !hasMp3Extension) {
+      this.musicError.set('Selecciona un archivo MP3 válido.');
+      return;
+    }
+
+    this.musicUploading.set(true);
+    this.adminService
+      .uploadUserMusic(userId, file)
+      .then(() => {
+        this.musicSuccess.set('Canción de fondo guardada correctamente.');
+      })
+      .catch((err: HttpErrorResponse) => {
+        console.error('[admin] music upload error:', err);
+        this.musicError.set(this.extractMessage(err, 'No se pudo subir la canción.'));
+      })
+      .finally(() => this.musicUploading.set(false));
   }
 
   updateEditField<K extends keyof EditFormState>(

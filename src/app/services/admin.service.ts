@@ -55,4 +55,18 @@ export class AdminService {
   getLandingQuestionnaire(userId: number): Promise<LandingQuestionnaire | null> {
     return this.questionnaireService.getForUser(userId);
   }
+
+  uploadUserMusic(userId: number, file: File): Promise<string> {
+    const body = new FormData();
+    body.append('audio', file, file.name);
+    return firstValueFrom(
+      this.http.post<ApiResponse<{ url: string }>>(
+        `${this.baseUrl}/api/admin/users/${userId}/music`,
+        body,
+      ),
+    ).then((res) => {
+      if (!res.data?.url) throw new Error('Music upload returned no URL');
+      return res.data.url;
+    });
+  }
 }

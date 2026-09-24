@@ -13,6 +13,7 @@ export class MusicPlayerComponent {
 
   readonly user = input.required<string>();
   readonly song = input.required<string>();
+  readonly source = input<string | null>(null);
 
   // Exponer signals del servicio para el template
   readonly isPlaying = this.audioService.isPlaying;
@@ -22,7 +23,9 @@ export class MusicPlayerComponent {
     // Usar effect para configurar la música cuando el componente se inicializa
     effect(() => {
       // Configurar la ruta de la música de fondo desde el slug de la invitación.
-      this.audioService.setSource(`/assets/${this.user()}/music/${this.song()}`);
+      this.audioService.setSource(
+        this.source() ?? `/assets/${this.user()}/music/${this.song()}`,
+      );
 
       // Intentar reproducir automáticamente
       // Nota: Los navegadores pueden bloquear esto si el usuario no ha interactuado
