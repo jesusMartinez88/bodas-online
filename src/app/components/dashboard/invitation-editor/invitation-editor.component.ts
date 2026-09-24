@@ -76,7 +76,11 @@ export class InvitationEditorComponent implements OnInit {
       this.loadQuestionnaire(),
     ]);
     this.initialQuestionnaireValue.set(
-      this.toQuestionnaireValue(questionnaire, media?.coverUrl ?? null),
+      this.toQuestionnaireValue(
+        questionnaire,
+        media?.coverUrl ?? null,
+        media?.galleryUrls ?? [],
+      ),
     );
   }
 
@@ -117,6 +121,7 @@ export class InvitationEditorComponent implements OnInit {
   private toQuestionnaireValue(
     q: LandingQuestionnaire | null,
     coverUrl: string | null = null,
+    galleryUrls: string[] = [],
   ): LandingQuestionnaireValue {
     const parseEntries = (raw: string | null | undefined): OurStoryEntry[] => {
       if (!raw) return [];
@@ -153,8 +158,9 @@ export class InvitationEditorComponent implements OnInit {
         coverPhoto: { existingUrl: coverUrl, file: null },
         hasOurStory: false,
         ourStoryPhotos,
-        hasGallery: false,
+        hasGallery: galleryUrls.length > 0,
         galleryFiles: [],
+        galleryExistingUrls: galleryUrls,
         hasAddToCalendar: false,
         hasVenueMap: false,
         hasGiftRegistry: false,
@@ -180,8 +186,9 @@ export class InvitationEditorComponent implements OnInit {
       coverPhoto: { existingUrl: coverUrl, file: null },
       hasOurStory: q.hasOurStory === 1,
       ourStoryPhotos,
-      hasGallery: q.hasGallery === 1,
+      hasGallery: q.hasGallery === 1 || galleryUrls.length > 0,
       galleryFiles: [],
+      galleryExistingUrls: galleryUrls,
       hasAddToCalendar: q.hasAddToCalendar === 1,
       hasVenueMap: q.hasVenueMap === 1,
       hasGiftRegistry: q.hasGiftRegistry === 1,
@@ -206,7 +213,7 @@ export class InvitationEditorComponent implements OnInit {
     this.isSavingQuestionnaire.set(true);
     this.errorMessage.set(null);
 
-    const { value, ourStoryPhotosToDelete } = submission;
+    const { value, ourStoryPhotosToDelete, galleryPhotosToDelete } = submission;
 
     try {
       // 1) Borrar del media server las fotos que el usuario eliminó.
@@ -215,6 +222,29 @@ export class InvitationEditorComponent implements OnInit {
           await firstValueFrom(this.mediaService.remove(url));
         } catch (err) {
           console.warn('[invitation-editor] no se pudo borrar foto:', url, err);
+        }
+      }
+
+      for (const url of galleryPhotosToDelete) {
+        try {
+          await firstValueFrom(this.mediaService.remove(url));
+        } catch (err) {
+          console.warn('[invitation-editor] no se pudo borrar foto de galería:', url, err);
+        }
+      }
+
+      // Subir las fotos nuevas que el usuario adjuntó desde el cuestionario.
+      if (value.hasGallery && value.galleryFiles.length > 0) {
+        const preparedGallery = await Promise.all(
+          value.galleryFiles.map((file) => this.preparePhoto(file)),
+        );
+        const validGallery = preparedGallery.filter(
+          (photo): photo is PreparedUpload => photo !== null,
+        );
+        if (validGallery.length > 0) {
+          await firstValueFrom(
+            this.mediaService.uploadGallery(validGallery.map((photo) => photo.blob)),
+          );
         }
       }
 
@@ -234,7 +264,7 @@ export class InvitationEditorComponent implements OnInit {
         );
         if (valid.length > 0) {
           uploadedUrls = await firstValueFrom(
-            this.mediaService.uploadGallery(valid.map((v) => v.blob)),
+            this.mediaService.uploadHistory(valid.map((v) => v.blob)),
           );
         }
       }
@@ -313,7 +343,11 @@ export class InvitationEditorComponent implements OnInit {
           : null,
       );
       this.initialQuestionnaireValue.set(
-        this.toQuestionnaireValue(refreshed, refreshedMedia.coverUrl),
+        this.toQuestionnaireValue(
+          refreshed,
+          refreshedMedia.coverUrl,
+          refreshedMedia.galleryUrls,
+        ),
       );
       this.questionnaireSavedAt.set(new Date());
     } catch (err) {

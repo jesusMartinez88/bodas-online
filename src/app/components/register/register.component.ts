@@ -26,7 +26,42 @@ type UsernameStatus =
 const MAX_COVER_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_COVER_PIXELS = 20_000_000;
 const MAX_COVER_DIMENSION = 2560;
-const COVER_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
+const MAX_UPLOAD_BYTES = 1_500_000;
+const MAX_UPLOAD_PIXELS = 12_000_000;
+const MAX_UPLOAD_DIMENSION = 1800;
+const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
+
+type ImageKind = 'jpeg' | 'png' | 'webp';
+
+export async function detectImageKind(file: File): Promise<ImageKind | null> {
+  const lowerType = file.type.toLowerCase();
+  if (lowerType === 'image/jpeg' || lowerType === 'image/jpg') return 'jpeg';
+  if (lowerType === 'image/png') return 'png';
+  if (lowerType === 'image/webp') return 'webp';
+
+  const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  const jpeg = header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
+  const png =
+    header[0] === 0x89 &&
+    header[1] === 0x50 &&
+    header[2] === 0x4e &&
+    header[3] === 0x47 &&
+    header[4] === 0x0d &&
+    header[5] === 0x0a &&
+    header[6] === 0x1a &&
+    header[7] === 0x0a;
+  const webp =
+    header[0] === 0x52 &&
+    header[1] === 0x49 &&
+    header[2] === 0x46 &&
+    header[3] === 0x46 &&
+    header[8] === 0x57 &&
+    header[9] === 0x45 &&
+    header[10] === 0x42 &&
+    header[11] === 0x50;
+
+  return jpeg ? 'jpeg' : png ? 'png' : webp ? 'webp' : null;
+}
 
 /**
  * Flujo de registro (3 pasos):
@@ -98,6 +133,7 @@ export class RegisterComponent {
     ourStoryPhotos: [],
     hasGallery: false,
     galleryFiles: [],
+    galleryExistingUrls: [],
     hasAddToCalendar: false,
     hasVenueMap: false,
     hasGiftRegistry: false,
@@ -229,12 +265,15 @@ export class RegisterComponent {
           .filter((f): f is File => f !== null);
         if (filesToUpload.length > 0) {
           try {
-            // El backend devuelve las URLs en el mismo orden en que se
-            // enviaron los archivos: capturamos ese orden para asociar
-            // cada URL con su caption en `ourStoryPhotos`.
-            uploadedOurStoryUrls = await firstValueFrom(
-              this.invitationMediaService.uploadGallery(filesToUpload),
-            );
+            const preparedFiles = await this.prepareUploadImages(filesToUpload, MAX_UPLOAD_BYTES);
+            if (preparedFiles.length > 0) {
+              // El backend devuelve las URLs en el mismo orden en que se
+              // enviaron los archivos: capturamos ese orden para asociar
+              // cada URL con su caption en `ourStoryPhotos`.
+              uploadedOurStoryUrls = await firstValueFrom(
+                this.invitationMediaService.uploadHistory(preparedFiles),
+              );
+            }
           } catch (uploadErr) {
             console.error('[register] our-story upload failed:', uploadErr);
             this.ourStoryUploadError.set(true);
@@ -247,9 +286,15 @@ export class RegisterComponent {
       // requiere JWT, esto solo funciona ahora que la cuenta ya existe.
       if (value.hasGallery && value.galleryFiles.length > 0) {
         try {
-          await firstValueFrom(
-            this.invitationMediaService.uploadGallery(value.galleryFiles),
+          const preparedGalleryFiles = await this.prepareUploadImages(
+            value.galleryFiles,
+            MAX_UPLOAD_BYTES,
           );
+          if (preparedGalleryFiles.length > 0) {
+            await firstValueFrom(
+              this.invitationMediaService.uploadGallery(preparedGalleryFiles),
+            );
+          }
         } catch (uploadErr) {
           console.error('[register] gallery upload failed:', uploadErr);
           this.galleryUploadError.set(true);
@@ -338,14 +383,67 @@ export class RegisterComponent {
     this.step.set(1);
   }
 
-  private async prepareCoverPhoto(file: File): Promise<Blob | null> {
-    if (
-      file.size === 0 ||
-      file.size > MAX_COVER_FILE_SIZE ||
-      !(COVER_MIME_TYPES as readonly string[]).includes(file.type)
-    ) {
+  private async prepareUploadImages(files: File[], maxBytes: number): Promise<Blob[]> {
+    const prepared = await Promise.all(
+      files.map((file) => this.prepareImageForUpload(file, maxBytes)),
+    );
+    return prepared.filter((blob): blob is Blob => blob !== null);
+  }
+
+  private async prepareImageForUpload(file: File, maxBytes: number): Promise<Blob | null> {
+    if (file.size === 0 || file.size > MAX_COVER_FILE_SIZE) {
       return null;
     }
+
+    const kind = await detectImageKind(file);
+    if (!kind) return null;
+
+    try {
+      const bitmap = await createImageBitmap(file);
+      try {
+        if (bitmap.width * bitmap.height > MAX_UPLOAD_PIXELS) return null;
+
+        const scale = Math.min(
+          1,
+          MAX_UPLOAD_DIMENSION / Math.max(bitmap.width, bitmap.height),
+        );
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        const context = canvas.getContext('2d');
+        if (!context) return null;
+
+        context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+        const qualityLevels = [0.9, 0.75, 0.6, 0.45, 0.3];
+        for (const quality of qualityLevels) {
+          const blob = await new Promise<Blob | null>((resolve) =>
+            canvas.toBlob(resolve, 'image/webp', quality),
+          );
+          if (blob && blob.size <= maxBytes) {
+            return blob;
+          }
+          if (blob && blob.size > maxBytes && quality === qualityLevels[qualityLevels.length - 1]) {
+            return blob;
+          }
+        }
+
+        return null;
+      } finally {
+        bitmap.close();
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  private async prepareCoverPhoto(file: File): Promise<Blob | null> {
+    if (file.size === 0 || file.size > MAX_COVER_FILE_SIZE) {
+      return null;
+    }
+
+    const kind = await detectImageKind(file);
+    if (!kind) return null;
 
     try {
       const bitmap = await createImageBitmap(file);
@@ -362,9 +460,18 @@ export class RegisterComponent {
         const context = canvas.getContext('2d');
         if (!context) return null;
         context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-        return await new Promise<Blob | null>((resolve) =>
-          canvas.toBlob(resolve, 'image/webp', 0.9),
-        );
+
+        const qualityLevels = [0.9, 0.8, 0.7, 0.55, 0.4];
+        for (const quality of qualityLevels) {
+          const blob = await new Promise<Blob | null>((resolve) =>
+            canvas.toBlob(resolve, 'image/webp', quality),
+          );
+          if (blob && blob.size <= MAX_COVER_FILE_SIZE) {
+            return blob;
+          }
+        }
+
+        return null;
       } finally {
         bitmap.close();
       }

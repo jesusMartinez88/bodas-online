@@ -306,17 +306,33 @@
 
             <p
               class="form-hint gallery-uploader__count"
-              [class.gallery-uploader__count--full]="form().galleryFiles.length >= 12"
+              [class.gallery-uploader__count--full]="(form().galleryFiles.length + (form().galleryExistingUrls?.length ?? 0)) >= 12"
               aria-live="polite">
-              {{ form().galleryFiles.length }} fotos adjuntadas (máx. 12)
+              {{ form().galleryFiles.length + (form().galleryExistingUrls?.length ?? 0) }} fotos adjuntadas (máx. 12)
             </p>
 
             @if (galleryError(); as msg) {
               <div class="form-error" role="alert">{{ msg }}</div>
             }
 
-            @if (form().galleryFiles.length > 0) {
+            @if ((form().galleryExistingUrls?.length ?? 0) > 0 || form().galleryFiles.length > 0) {
               <ul class="gallery-preview">
+                @for (url of form().galleryExistingUrls; track url; let i = $index) {
+                  <li class="gallery-preview__item">
+                    <img
+                      class="gallery-preview__image"
+                      [src]="url"
+                      [alt]="'Foto existente ' + (i + 1)">
+                    <span class="gallery-preview__name">Foto existente {{ i + 1 }}</span>
+                    <button
+                      type="button"
+                      class="gallery-preview__remove"
+                      (click)="removeGalleryExistingPhoto(i)"
+                      [attr.aria-label]="'Quitar foto existente ' + (i + 1)">
+                      Quitar
+                    </button>
+                  </li>
+                }
                 @for (file of form().galleryFiles; track file.name; let i = $index) {
                   <li class="gallery-preview__item">
                     <span class="gallery-preview__name">📷 {{ file.name }}</span>

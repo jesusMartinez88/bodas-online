@@ -6,7 +6,7 @@
     "start": "ng serve --configuration production",
     "dev": "ng serve --configuration development",
     "build": "ng build",
-    "build:prod": "ng build --configuration production --base-href /boda-judith-jesus/",
+    "build:prod": "ng build --configuration production --base-href /bodas-online/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:security": "vitest run src/app/services/auth-security.spec.ts src/app/services/security-headers.spec.ts",

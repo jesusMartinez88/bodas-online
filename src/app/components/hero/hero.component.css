@@ -13,7 +13,8 @@
   left: -10%;
   right: -10%;
   bottom: -20%;
-  background: url('../../../assets/fotos/judith-jesus/hero.jpeg') no-repeat center center;
+  background-repeat: no-repeat;
+  background-position: center center;
   background-size: cover;
   z-index: 0;
   transform-origin: center center;

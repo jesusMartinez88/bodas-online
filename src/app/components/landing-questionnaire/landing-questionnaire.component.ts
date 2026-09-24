@@ -35,6 +35,7 @@ import { FormsModule } from '@angular/forms';
 export interface LandingQuestionnaireSubmission {
   value: LandingQuestionnaireValue;
   ourStoryPhotosToDelete: string[];
+  galleryPhotosToDelete: string[];
 }
 
 /**
@@ -79,6 +80,9 @@ export interface LandingQuestionnaireValue {
   // envían al backend como parte del cuestionario: se suben aparte vía
   // /api/invitation-media/gallery después de crear la cuenta).
   galleryFiles: File[];
+  // URLs actuales de la galería ya persistidas en el backend. Sirven para
+  // rehidratar el contador y una vista previa en el editor de invitación.
+  galleryExistingUrls: string[];
   hasAddToCalendar: boolean;
   hasVenueMap: boolean;
   hasGiftRegistry: boolean;
@@ -125,6 +129,7 @@ export class LandingQuestionnaireComponent {
     ourStoryPhotos: [],
     hasGallery: false,
     galleryFiles: [],
+    galleryExistingUrls: [],
     hasAddToCalendar: false,
     hasVenueMap: false,
     hasGiftRegistry: false,
@@ -169,8 +174,10 @@ export class LandingQuestionnaireComponent {
         coverPhoto: { ...initialValue.coverPhoto },
         ourStoryPhotos: initialValue.ourStoryPhotos.map((photo) => ({ ...photo })),
         galleryFiles: [...initialValue.galleryFiles],
+        galleryExistingUrls: [...(initialValue.galleryExistingUrls ?? [])],
       });
       this.removedOurStoryUrls.set([]);
+      this.removedGalleryUrls.set([]);
     });
   }
 
@@ -209,6 +216,7 @@ export class LandingQuestionnaireComponent {
    * antes de subir el cuestionario actualizado.
    */
   protected readonly removedOurStoryUrls = signal<string[]>([]);
+  protected readonly removedGalleryUrls = signal<string[]>([]);
 
   /** El usuario quiere enviar el cuestionario. */
   protected onSubmit() {
@@ -217,6 +225,7 @@ export class LandingQuestionnaireComponent {
     this.submitted.emit({
       value: this.form(),
       ourStoryPhotosToDelete: this.removedOurStoryUrls(),
+      galleryPhotosToDelete: this.removedGalleryUrls(),
     });
   }
 
@@ -259,7 +268,11 @@ export class LandingQuestionnaireComponent {
   protected onGalleryToggle(checked: boolean) {
     this.patchField('hasGallery', checked);
     if (!checked) {
+      this.removedGalleryUrls.update((urls) => [
+        ...new Set([...urls, ...this.form().galleryExistingUrls]),
+      ]);
       this.patchField('galleryFiles', []);
+      this.patchField('galleryExistingUrls', []);
       this.galleryError.set(null);
     }
   }
@@ -275,12 +288,13 @@ export class LandingQuestionnaireComponent {
     if (input) input.value = '';
 
     const current = this.form().galleryFiles;
+    const existingCount = this.form().galleryExistingUrls.length;
     const accepted = files.filter((file) =>
       (GALLERY_ACCEPTED_MIME as readonly string[]).includes(file.type),
     );
     const rejectedCount = files.length - accepted.length;
 
-    const remaining = GALLERY_MAX_FILES - current.length;
+    const remaining = GALLERY_MAX_FILES - (current.length + existingCount);
     if (remaining <= 0) {
       this.galleryError.set(
         `Has llegado al máximo de ${GALLERY_MAX_FILES} fotos. Quita alguna para añadir más.`,
@@ -312,6 +326,22 @@ export class LandingQuestionnaireComponent {
     this.form.update((f) => ({
       ...f,
       galleryFiles: f.galleryFiles.filter((_, i) => i !== index),
+    }));
+    this.galleryError.set(null);
+  }
+
+  /** Quita una foto ya persistida de la galería en modo edición. */
+  protected removeGalleryExistingPhoto(index: number) {
+    const removed = this.form().galleryExistingUrls[index];
+    if (!removed) return;
+
+    this.removedGalleryUrls.update((urls) =>
+      urls.includes(removed) ? urls : [...urls, removed],
+    );
+
+    this.form.update((f) => ({
+      ...f,
+      galleryExistingUrls: f.galleryExistingUrls.filter((_, i) => i !== index),
     }));
     this.galleryError.set(null);
   }

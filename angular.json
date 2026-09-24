@@ -8,7 +8,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "boda-judith-jesus": {
+    "bodas-online": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -86,10 +86,10 @@
           "builder": "@ngx-env/builder:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "boda-judith-jesus:build:production"
+              "buildTarget": "bodas-online:build:production"
             },
             "development": {
-              "buildTarget": "boda-judith-jesus:build:development"
+              "buildTarget": "bodas-online:build:development"
             }
           },
           "defaultConfiguration": "development"

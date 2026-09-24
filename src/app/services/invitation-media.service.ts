@@ -46,6 +46,14 @@ export class InvitationMediaService {
       .pipe(map((response) => response.data.urls.map((url) => this.absoluteUrl(url))));
   }
 
+  uploadHistory(images: Blob[]) {
+    const body = new FormData();
+    images.forEach((image, index) => body.append('images', image, `history-${index + 1}.webp`));
+    return this.http
+      .post<ApiResponse<{ urls: string[] }>>(`${this.baseUrl}/history`, body)
+      .pipe(map((response) => response.data.urls.map((url) => this.absoluteUrl(url))));
+  }
+
   remove(url: string) {
     const name = new URL(url).pathname.split('/').pop();
     if (!name) throw new Error('Invalid media URL');

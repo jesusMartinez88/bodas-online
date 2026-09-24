@@ -124,7 +124,7 @@ export class LandingComponent {
       quote:
         'Nuestros invitados quedaron fascinados. Muchos nos dijeron que fue la mejor invitación que habían visto en su vida. La gestión de mesas nos ahorró horas de discusiones.',
       rating: 5,
-      avatar: 'assets/fotos/reviews/foto1.jpeg',
+      avatar: 'assets/reviews/foto1.webp',
       tag: '160 invitados',
     },
     {
@@ -134,7 +134,7 @@ export class LandingComponent {
       quote:
         'El control de alergias y el autobús nos salvó la vida para coordinar con el catering. Vale cada euro invertido, súper intuitivo tanto para nosotros como para nuestros abuelos.',
       rating: 5,
-      avatar: 'assets/fotos/reviews/foto6.jpeg',
+      avatar: 'assets/reviews/foto2.webp',
       tag: '210 invitados',
     },
     {
@@ -144,7 +144,7 @@ export class LandingComponent {
       quote:
         'Lo configuramos en una tarde y lo mandamos por WhatsApp. En menos de 48 horas ya teníamos más del 70% de las confirmaciones registradas.',
       rating: 5,
-      avatar: 'assets/fotos/reviews/foto8.jpeg',
+      avatar: 'assets/reviews/foto3.webp',
       tag: '135 invitados',
     },
   ];
