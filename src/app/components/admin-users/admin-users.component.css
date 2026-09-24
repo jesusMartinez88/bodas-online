@@ -520,6 +520,12 @@ code {
   overflow: hidden;
 }
 
+.modal--edit-user {
+  max-width: 600px;
+  border: 1px solid rgba(190, 24, 93, 0.16);
+  border-radius: 16px;
+}
+
 .modal--small {
   max-width: 420px;
 }
@@ -693,6 +699,28 @@ code {
   gap: 0.75rem;
 }
 
+.modal-header--edit-user {
+  align-items: flex-start;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, #fff1f7, #ffffff 70%);
+}
+
+.modal-eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--admin-primary);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.modal-header__subtitle {
+  margin: 0.3rem 0 0;
+  color: var(--admin-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
 .modal-header h2 {
   margin: 0;
   font-size: 1.1rem;
@@ -719,6 +747,21 @@ code {
   flex-direction: column;
   gap: 1rem;
   overflow-y: auto;
+}
+
+.modal-body--edit-user {
+  gap: 1.1rem;
+  padding: 1.5rem;
+}
+
+.modal-body--edit-user > .form-group {
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-body--edit-user > .form-group:last-of-type {
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 .modal-body p {
@@ -749,7 +792,8 @@ code {
 
 .form-group input[type='email'],
 .form-group input[type='text'],
-.form-group select {
+.form-group select,
+.form-group input[type='file'] {
   padding: 0.55rem 0.7rem;
   font-size: 0.95rem;
   border: 1px solid var(--admin-border);
@@ -758,6 +802,72 @@ code {
   color: var(--admin-text);
   box-sizing: border-box;
   font-family: inherit;
+}
+
+.form-group input[type='file'] {
+  padding: 0.45rem;
+  font-size: 0.85rem;
+}
+
+.music-upload-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem;
+  border: 1px solid #fbcfe8;
+  border-radius: 10px;
+  background: #fff7fb;
+}
+
+.music-upload-card__copy {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.music-upload-card__copy strong,
+.music-upload-card__copy small {
+  display: block;
+}
+
+.music-upload-card__copy strong {
+  color: #831843;
+  font-size: 0.85rem;
+}
+
+.music-upload-card__copy small {
+  margin-top: 0.2rem;
+  color: var(--admin-text-muted);
+  font-size: 0.75rem;
+}
+
+.music-upload-card__icon {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background: #fce7f3;
+  color: var(--admin-primary);
+  font-size: 1.3rem;
+}
+
+.music-upload-card__button {
+  position: relative;
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.music-upload-card__button input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  opacity: 0;
 }
 
 .form-group input:focus,

@@ -242,20 +242,24 @@
       aria-modal="true"
       [attr.aria-labelledby]="'edit-title-' + user.id"
     >
-      <header class="modal-header">
-        <h2 [id]="'edit-title-' + user.id">Editar {{ user.username }}</h2>
+      <header class="modal-header modal-header--edit-user">
+        <div class="modal-header__text">
+          <p class="modal-eyebrow">Cuenta de usuario · #{{ user.id }}</p>
+          <h2 [id]="'edit-title-' + user.id">Editar {{ user.username }}</h2>
+          <p class="modal-header__subtitle">Gestiona sus datos, estado y recursos de invitación.</p>
+        </div>
         <button
           type="button"
           class="modal-close"
           (click)="closeEditDialog()"
-          [disabled]="isSaving()"
+          [disabled]="isSaving() || musicUploading()"
           aria-label="Cerrar"
         >
           ✕
         </button>
       </header>
 
-      <form class="modal-body" (ngSubmit)="saveEdit()">
+      <form class="modal-body modal-body--edit-user" (ngSubmit)="saveEdit()">
         @if (actionError(); as message) {
           <div class="alert alert--error" role="alert">{{ message }}</div>
         }
@@ -322,15 +326,24 @@
 
         <div class="form-group">
           <label [for]="'music-' + user.id">Música de fondo</label>
-          <input
-            [id]="'music-' + user.id"
-            type="file"
-            accept=".mp3,audio/mpeg,audio/mp3"
-            (change)="uploadMusic(user.id, $event)"
-            [disabled]="musicUploading() || isSaving()">
-          <small class="form-hint">
-            Se guardará como la música de {{ user.username }}. Máximo 20 MB.
-          </small>
+          <div class="music-upload-card">
+            <div class="music-upload-card__copy">
+              <span class="music-upload-card__icon" aria-hidden="true">♫</span>
+              <div>
+                <strong>Personaliza su banda sonora</strong>
+                <small>MP3 · máximo 20 MB · reemplaza la anterior</small>
+              </div>
+            </div>
+            <label class="btn btn--small btn--ghost music-upload-card__button">
+              <span aria-hidden="true">↑</span> Elegir MP3
+              <input
+                [id]="'music-' + user.id"
+                type="file"
+                accept=".mp3,audio/mpeg,audio/mp3"
+                (change)="uploadMusic(user.id, $event)"
+                [disabled]="musicUploading() || isSaving()">
+            </label>
+          </div>
           @if (musicUploading()) {
             <small class="form-hint" role="status">Subiendo canción…</small>
           }
@@ -347,7 +360,7 @@
             type="button"
             class="btn btn--ghost"
             (click)="closeEditDialog()"
-            [disabled]="isSaving()"
+            [disabled]="isSaving() || musicUploading()"
           >
             Cancelar
           </button>
