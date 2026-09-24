@@ -39,7 +39,7 @@ export class AudioService {
     this.audio.addEventListener('error', (e) => {
       this.isLoadedSignal.set(false);
       console.error('❌ Error al cargar el audio:', e);
-      console.error('Verifica que el archivo existe en: public/music/');
+      console.error('Verifica que el archivo existe en: src/assets/{usuario}/music/');
     });
   }
 
