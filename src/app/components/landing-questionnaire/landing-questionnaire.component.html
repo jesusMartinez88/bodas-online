@@ -505,6 +505,6 @@
     class="btn-primary"
     [disabled]="!isValid() || submitting()"
     [attr.aria-busy]="submitting()">
-    {{ submitting() ? 'Guardando…' : 'Guardar cambios' }}
+    {{ submitting() ? (editing() ? 'Guardando…' : 'Registrando…') : (editing() ? 'Guardar cambios' : 'Registrar usuario') }}
   </button>
 </form>

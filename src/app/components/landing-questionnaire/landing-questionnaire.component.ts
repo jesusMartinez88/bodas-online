@@ -149,6 +149,9 @@ export class LandingQuestionnaireComponent {
   /** Mensaje de error controlado por el padre (red, validación backend...). */
   errorMessage = input<string | null>(null);
 
+  /** Cambia el texto de acción cuando el formulario edita una cuenta existente. */
+  editing = input(false);
+
   /**
    * Se dispara cuando el usuario quiere avanzar. El padre es responsable
    * de llamar al backend y decidir qué pantalla mostrar a continuación.
