@@ -1,5 +1,5 @@
 <div class="register-container">
-  <div class="register-card">
+  <div class="register-card" [class.register-card--questionnaire]="step() === 2">
 
     @if (step() === 1) {
       <div class="register-header">

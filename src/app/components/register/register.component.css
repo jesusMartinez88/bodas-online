@@ -63,7 +63,7 @@
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(253, 242, 248, 0.92) 100%);
   backdrop-filter: blur(20px);
   border-radius: 2.5rem;
-  box-shadow: 
+  box-shadow:
     0 25px 70px rgba(190, 24, 93, 0.2),
     0 0 0 1px rgba(236, 72, 153, 0.1) inset,
     0 1px 0 rgba(255, 255, 255, 0.8) inset;
@@ -72,6 +72,10 @@
   z-index: 1;
   overflow: hidden;
   animation: cardEntrance 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.register-card--questionnaire {
+  max-width: 528px;
 }
 
 @keyframes cardEntrance {
@@ -207,7 +211,7 @@
   outline: none;
   background: linear-gradient(#fdf2f8, #fdf2f8) padding-box,
               linear-gradient(135deg, #ec4899, #be185d) border-box;
-  box-shadow: 
+  box-shadow:
     0 8px 24px rgba(236, 72, 153, 0.2),
     0 0 0 4px rgba(236, 72, 153, 0.1);
   transform: translateY(-2px);
@@ -310,7 +314,7 @@
   margin-top: 1rem;
   position: relative;
   overflow: hidden;
-  box-shadow: 
+  box-shadow:
     0 10px 30px rgba(236, 72, 153, 0.35),
     0 0 0 1px rgba(255, 255, 255, 0.1) inset;
 }
@@ -332,7 +336,7 @@
 
 .btn-primary:hover {
   transform: translateY(-3px) scale(1.02);
-  box-shadow: 
+  box-shadow:
     0 15px 40px rgba(236, 72, 153, 0.45),
     0 0 0 1px rgba(255, 255, 255, 0.2) inset;
 }
@@ -419,7 +423,7 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto 2rem;
-  box-shadow: 
+  box-shadow:
     0 15px 35px rgba(16, 185, 129, 0.35),
     0 0 0 8px rgba(16, 185, 129, 0.1);
   animation: successPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -505,6 +509,10 @@
   .register-card {
     padding: 2.5rem 1.75rem;
     border-radius: 2rem;
+  }
+
+  .register-card--questionnaire {
+    max-width: 100%;
   }
 
   .register-title {
