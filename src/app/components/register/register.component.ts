@@ -63,18 +63,15 @@ export async function detectImageKind(file: File): Promise<ImageKind | null> {
 }
 
 /**
- * Flujo de registro (3 pasos):
+ * Flujo de registro (4 pasos):
  *
  *   1. Datos básicos (nombres, username, email, password).
  *      Botón → "Continuar" (antes "Continuar al pago").
  *   2. Cuestionario inicial de la landing (fecha, invitados, color,
  *      servicios extra, etc.). Se guarda asociado al usuario recién
  *      creado en el mismo submit.
- *   3. Éxito → "Ir a mi Panel de Control".
- *
- * El paso de pago que había antes se ha eliminado: era simulado y
- * ya no tiene sentido ahora que el cuestionario es el siguiente
- * paso lógico. La venta/cobro se gestiona aparte con el admin.
+ *   3. Pago demo obligatorio.
+ *   4. Éxito → "Ir a mi Panel de Control".
  */
 @Component({
   selector: 'app-register',
@@ -84,10 +81,12 @@ export async function detectImageKind(file: File): Promise<ImageKind | null> {
   imports: [FormsModule, LandingQuestionnaireComponent],
 })
 export class RegisterComponent {
-  protected readonly step = signal<1 | 2 | 3>(1);
+  protected readonly step = signal<1 | 2 | 3 | 4>(1);
   protected readonly processing = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly createdSlug = signal<string | null>(null);
+  protected readonly paymentProcessing = signal(false);
+  protected readonly paymentError = signal<string | null>(null);
 
   protected readonly usernameStatus = signal<UsernameStatus>('idle');
   protected readonly usernameMessage = signal<string | null>(null);
@@ -369,6 +368,18 @@ export class RegisterComponent {
   goToDashboard() {
     const slug = this.createdSlug() ?? this.formData.username;
     this.router.navigate([`/${slug}/dashboard`]);
+  }
+
+  /** Pago local de desarrollo. En producción se sustituirá por el checkout real. */
+  completeDemoPayment() {
+    if (this.paymentProcessing()) return;
+    this.paymentError.set(null);
+    this.paymentProcessing.set(true);
+
+    window.setTimeout(() => {
+      this.paymentProcessing.set(false);
+      this.step.set(4);
+    }, 700);
   }
 
   /**

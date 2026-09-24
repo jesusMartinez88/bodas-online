@@ -474,6 +474,83 @@
   gap: 1.25rem;
 }
 
+.payment-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.payment-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid #fcd34d;
+  border-radius: 999px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.payment-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(236, 72, 153, 0.2);
+  border-radius: 1rem;
+  background: linear-gradient(145deg, #fff7fb, #ffffff);
+}
+
+.payment-summary__label,
+.payment-summary__detail {
+  display: block;
+}
+
+.payment-summary__label {
+  color: #831843;
+  font-weight: 800;
+}
+
+.payment-summary__detail {
+  margin-top: 0.25rem;
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.payment-summary strong {
+  color: #be185d;
+  font-size: 1.65rem;
+  white-space: nowrap;
+}
+
+.payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.payment-form .form-input[readonly] {
+  background: #f8fafc;
+  color: #475569;
+  cursor: default;
+}
+
+.payment-fields-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.payment-disclaimer {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
 /* Mensaje de error accesible (aria-live=alert ya viene del role="alert") */
 .form-error {
   background: linear-gradient(145deg, #fff1f2, #ffe4e6);
@@ -532,6 +609,10 @@
   .payment-option {
     padding: 1rem 1.25rem;
     font-size: 0.95rem;
+  }
+
+  .payment-fields-row {
+    gap: 0.75rem;
   }
 
   .input-prefix {

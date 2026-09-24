@@ -127,6 +127,66 @@
     }
 
     @if (step() === 3) {
+      <div class="payment-panel">
+        <div class="register-header">
+          <span class="payment-badge">Pago seguro · modo desarrollo</span>
+          <h2 class="register-title">Activa tu web de boda</h2>
+          <p class="register-subtitle">
+            Completa este paso para acceder a tu panel de control.
+          </p>
+        </div>
+
+        <div class="payment-summary">
+          <div>
+            <span class="payment-summary__label">Plan Pareja Completo</span>
+            <span class="payment-summary__detail">Acceso ilimitado · pago único</span>
+          </div>
+          <strong>59€</strong>
+        </div>
+
+        <form class="payment-form" (ngSubmit)="completeDemoPayment()" novalidate>
+          <div class="form-field">
+            <label class="form-label" for="payment-card">Número de tarjeta</label>
+            <input
+              id="payment-card"
+              type="text"
+              inputmode="numeric"
+              placeholder="4242 4242 4242 4242"
+              autocomplete="cc-number"
+              class="form-input"
+              value="4242 4242 4242 4242"
+              readonly>
+          </div>
+          <div class="payment-fields-row">
+            <div class="form-field">
+              <label class="form-label" for="payment-expiry">Caducidad</label>
+              <input id="payment-expiry" type="text" placeholder="12/30" class="form-input" value="12/30" readonly>
+            </div>
+            <div class="form-field">
+              <label class="form-label" for="payment-cvc">CVC</label>
+              <input id="payment-cvc" type="text" placeholder="123" class="form-input" value="123" readonly>
+            </div>
+          </div>
+
+          @if (paymentError(); as msg) {
+            <div class="form-error" role="alert">{{ msg }}</div>
+          }
+
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="paymentProcessing()"
+            [attr.aria-busy]="paymentProcessing()">
+            {{ paymentProcessing() ? 'Procesando pago…' : 'Pagar 59€ y continuar' }}
+          </button>
+          <p class="payment-disclaimer">
+            En desarrollo no se realiza ningún cargo real. En producción este botón se conectará al proveedor de pagos.
+          </p>
+        </form>
+      </div>
+    }
+
+    @if (step() === 4) {
       <div class="success-panel">
         <div class="success-icon">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
