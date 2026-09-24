@@ -29,7 +29,6 @@ const MAX_COVER_DIMENSION = 2560;
 const MAX_UPLOAD_BYTES = 1_500_000;
 const MAX_UPLOAD_PIXELS = 12_000_000;
 const MAX_UPLOAD_DIMENSION = 1800;
-const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 
 type ImageKind = 'jpeg' | 'png' | 'webp';
 
