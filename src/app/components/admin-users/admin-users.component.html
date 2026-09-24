@@ -439,10 +439,14 @@
       aria-modal="true"
       [attr.aria-labelledby]="'questionnaire-title-' + user.id"
     >
-      <header class="modal-header">
-        <h2 [id]="'questionnaire-title-' + user.id">
-          📋 Cuestionario de {{ user.username }}
-        </h2>
+      <header class="modal-header modal-header--questionnaire">
+        <div class="modal-header__text">
+          <p class="modal-eyebrow">Brief de invitación · #{{ user.id }}</p>
+          <h2 [id]="'questionnaire-title-' + user.id">
+            Cuestionario de {{ user.username }}
+          </h2>
+          <p class="modal-header__subtitle">Resumen de preferencias y contenido para diseñar la landing.</p>
+        </div>
         <button
           type="button"
           class="modal-close"
@@ -454,7 +458,7 @@
         </button>
       </header>
 
-      <div class="modal-body">
+      <div class="modal-body questionnaire-modal-body">
         @if (questionnaireLoading()) {
           <p class="muted" role="status" aria-live="polite">Cargando cuestionario…</p>
         } @else if (questionnaireError(); as msg) {
@@ -483,7 +487,15 @@
             </div>
 
             <div class="questionnaire-row questionnaire-row--section-header">
-              <dt colspan="2">Servicios extra</dt>
+              <dt colspan="2">
+                <span class="questionnaire-section-heading">
+                  <span class="questionnaire-section-icon" aria-hidden="true">✦</span>
+                  <span>
+                    <strong>Servicios extra</strong>
+                    <small>Elementos opcionales de la invitación</small>
+                  </span>
+                </span>
+              </dt>
             </div>
 
             <div class="questionnaire-row">
@@ -493,6 +505,10 @@
             <div class="questionnaire-row">
               <dt>🏨 Hotel para invitados</dt>
               <dd>{{ formatYesNo(q.hasHotelService) }}</dd>
+            </div>
+            <div class="questionnaire-row">
+              <dt>🖼 Foto de portada</dt>
+              <dd>{{ formatYesNo(q.hasCoverPhoto) }}</dd>
             </div>
             <div class="questionnaire-row">
               <dt>📖 Historia con fotos</dt>
@@ -576,7 +592,15 @@
             }
 
             <div class="questionnaire-row questionnaire-row--section-header">
-              <dt colspan="2">Contacto</dt>
+              <dt colspan="2">
+                <span class="questionnaire-section-heading">
+                  <span class="questionnaire-section-icon" aria-hidden="true">⌁</span>
+                  <span>
+                    <strong>Contacto</strong>
+                    <small>Canales para comunicarse con la pareja</small>
+                  </span>
+                </span>
+              </dt>
             </div>
 
             <div class="questionnaire-row">

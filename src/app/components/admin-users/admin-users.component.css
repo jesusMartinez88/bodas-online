@@ -531,11 +531,28 @@ code {
 }
 
 .modal--questionnaire {
-  max-width: 640px;
+  max-width: 760px;
+  border: 1px solid rgba(29, 78, 216, 0.14);
+  border-radius: 16px;
+}
+
+.modal-header--questionnaire {
+  align-items: flex-start;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, #eff6ff, #ffffff 72%);
+}
+
+.questionnaire-modal-body {
+  gap: 1.25rem;
+  padding: 1.5rem;
 }
 
 .questionnaire-meta {
-  margin: 0 0 0.5rem;
+  margin: -0.35rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border-left: 3px solid var(--admin-info);
+  background: #eff6ff;
+  border-radius: 0 6px 6px 0;
 }
 
 .questionnaire-grid {
@@ -550,9 +567,15 @@ code {
   flex-direction: column;
   gap: 0.15rem;
   padding: 0.65rem 0.85rem;
-  background: #f9fafb;
+  background: #ffffff;
   border: 1px solid var(--admin-border);
   border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.questionnaire-row:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
 }
 
 .questionnaire-row dt {
@@ -584,16 +607,61 @@ code {
 .questionnaire-row--section-header {
   grid-column: 1 / -1;
   padding: 0.5rem 0 0.25rem;
-  border-bottom: 1px solid rgba(190, 24, 93, 0.15);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   margin-top: 0.25rem;
 }
 
 .questionnaire-row--section-header dt {
   font-size: 0.8rem;
   font-weight: 700;
-  text-transform: uppercase;
+  color: var(--admin-info);
+}
+
+.questionnaire-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.questionnaire-section-heading > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.questionnaire-section-heading strong {
+  font-size: 0.8rem;
   letter-spacing: 0.06em;
-  color: #be185d;
+  text-transform: uppercase;
+}
+
+.questionnaire-section-heading small {
+  color: var(--admin-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.questionnaire-section-icon {
+  display: grid;
+  width: 1.85rem;
+  height: 1.85rem;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid #bfdbfe;
+  border-radius: 7px;
+  background: #eff6ff;
+  color: var(--admin-info);
+  font-size: 1rem;
+}
+
+.questionnaire-row--section-header:hover {
+  border: 0;
+  background: transparent;
 }
 
 .questionnaire-row dd.monospace {
