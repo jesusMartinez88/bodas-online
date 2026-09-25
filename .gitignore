@@ -46,3 +46,5 @@ Thumbs.db
 
 # Pnpm cache
 .pnpm-store
+# Local Pi runtime state
+.atl/
