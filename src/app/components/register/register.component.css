@@ -551,6 +551,57 @@
   text-align: center;
 }
 
+/* Contenedor del Payment Element de Stripe. Le damos un marco coherente
+   con el resto de inputs del formulario. Stripe inyecta su propio iframe
+   dentro; nosotros solo definimos el aspecto del wrapper. */
+.stripe-payment-element {
+  min-height: 280px;
+  padding: 0.875rem 1rem;
+  border: 2px solid rgba(190, 24, 93, 0.15);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.stripe-payment-element:focus-within {
+  border-color: rgba(190, 24, 93, 0.45);
+  box-shadow: 0 0 0 4px rgba(190, 24, 93, 0.08);
+}
+
+.payment-field-hint {
+  margin: 0.5rem 0 0;
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+/* Estado de carga mientras Stripe.js inicializa */
+.payment-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.125rem;
+  border-radius: 1rem;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(253, 242, 248, 0.7));
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.payment-loading__spinner {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  border: 2px solid rgba(190, 24, 93, 0.25);
+  border-top-color: #be185d;
+  animation: payment-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes payment-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Mensaje de error accesible (aria-live=alert ya viene del role="alert") */
 .form-error {
   background: linear-gradient(145deg, #fff1f2, #ffe4e6);

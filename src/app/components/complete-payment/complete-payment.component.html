@@ -1,0 +1,113 @@
+<div class="complete-payment-container">
+  <div class="complete-payment-card">
+    <div class="register-header">
+      <span class="payment-badge">
+        @if (paymentMode() === 'ready') {
+          Pago seguro · Stripe
+        } @else if (paymentMode() === 'unavailable') {
+          Pago seguro · modo desarrollo
+        } @else {
+          Pago seguro
+        }
+      </span>
+      <h2 class="register-title">Completa el pago</h2>
+      <p class="register-subtitle">
+        Activa tu cuenta para acceder a tu panel de control.
+      </p>
+    </div>
+
+    <div class="payment-summary">
+      <div>
+        <span class="payment-summary__label">Plan Pareja Completo</span>
+        <span class="payment-summary__detail">Acceso ilimitado · pago único</span>
+      </div>
+      <strong>{{ paymentAmountMajor() }} {{ paymentCurrency() }}</strong>
+    </div>
+
+    @if (paymentMode() === 'ready') {
+      <form class="payment-form" (ngSubmit)="completePayment()" novalidate>
+        <div class="form-field">
+          <span id="cp-payment-element-label" class="form-label">Datos de pago</span>
+          <div
+            #paymentElement
+            class="stripe-payment-element"
+            role="group"
+            aria-labelledby="cp-payment-element-label"
+            aria-label="Formulario de pago con tarjeta"></div>
+          <p class="payment-field-hint">
+            Acepta tarjetas de débito y crédito (Visa, Mastercard, Maestro).
+          </p>
+        </div>
+
+        @if (paymentError(); as msg) {
+          <div class="form-error" role="alert">{{ msg }}</div>
+        }
+
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="paymentProcessing()"
+          [attr.aria-busy]="paymentProcessing()">
+          {{ paymentProcessing()
+              ? 'Procesando pago…'
+              : 'Pagar ' + paymentAmountMajor() + ' ' + paymentCurrency() + ' y activar mi cuenta' }}
+        </button>
+        <p class="payment-disclaimer">
+          Tu pago se procesa de forma segura a través de Stripe.
+          Nunca almacenamos los datos de tu tarjeta.
+        </p>
+      </form>
+    } @else if (paymentMode() === 'loading') {
+      <div class="payment-loading" role="loading">
+        <span class="payment-loading__spinner" aria-hidden="true"></span>
+        <span>Cargando el formulario de pago seguro…</span>
+      </div>
+    } @else {
+      <form class="payment-form" (ngSubmit)="completePayment()" novalidate>
+        <div class="form-field">
+          <label class="form-label" for="cp-payment-card">Número de tarjeta</label>
+          <input
+            id="cp-payment-card"
+            type="text"
+            inputmode="numeric"
+            placeholder="4242 4242 4242 4242"
+            autocomplete="cc-number"
+            class="form-input"
+            value="4242 4242 4242 4242"
+            readonly>
+        </div>
+        <div class="payment-fields-row">
+          <div class="form-field">
+            <label class="form-label" for="cp-payment-expiry">Caducidad</label>
+            <input id="cp-payment-expiry" type="text" placeholder="12/30" class="form-input" value="12/30" readonly>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="cp-payment-cvc">CVC</label>
+            <input id="cp-payment-cvc" type="text" placeholder="123" class="form-input" value="123" readonly>
+          </div>
+        </div>
+
+        @if (paymentError(); as msg) {
+          <div class="form-error" role="alert">{{ msg }}</div>
+        }
+
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="paymentProcessing()"
+          [attr.aria-busy]="paymentProcessing()">
+          {{ paymentProcessing()
+              ? 'Procesando pago…'
+              : 'Pagar ' + paymentAmountMajor() + ' ' + paymentCurrency() + ' y activar mi cuenta' }}
+        </button>
+        <p class="payment-disclaimer">
+          @if (paymentError()) {
+            {{ paymentError() }}
+          } @else {
+            En desarrollo no se realiza ningún cargo real. En producción este botón se conecta a Stripe.
+          }
+        </p>
+      </form>
+    }
+  </div>
+</div>

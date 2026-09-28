@@ -20,6 +20,13 @@ export interface CurrentUser {
   email: string | null;
   role: string;
   slug: string;
+  /**
+   * Fecha ISO en la que el webhook de Stripe confirmó el pago, o
+   * `null` si el usuario aún no ha pagado. La fuente de verdad es
+   * el backend (columna `users.paidAt`); en el frontend se mantiene
+   * sincronizada de forma optimista tras un pago exitoso.
+   */
+  paidAt: string | null;
 }
 
 /**
@@ -56,6 +63,9 @@ const userFromToken = (token: string | null): CurrentUser | null => {
     email: (payload['email'] as string | null) ?? null,
     role: String(payload['role'] ?? 'user'),
     slug: String(payload['slug'] ?? ''),
+    // `paidAt` puede no estar en tokens emitidos antes del cambio;
+    // lo tratamos como `null` en ese caso (no pagado todavía).
+    paidAt: (payload['paidAt'] as string | null) ?? null,
   };
 };
 
@@ -252,6 +262,22 @@ export class AuthService {
   refreshCurrentUser() {
     this.tokenSignal.set(this.readToken());
     this.currentUserSignal.set(this.userFromPersistedToken());
+  }
+
+  /**
+   * Marca al usuario actual como pagado de forma optimista. Lo usamos
+   * justo después de que `confirmPayment` devuelve `succeeded` para
+   * que el `paymentGuard` deje pasar al dashboard sin esperar al
+   * webhook (que es la fuente real pero puede tardar unos segundos).
+   *
+   * El JWT no se re-firma aquí: el payload queda con `paidAt: null`
+   * hasta el próximo login. La signal `currentUserSignal` es la que
+   * consulta el guard, así que el efecto es inmediato en la SPA.
+   */
+  markAsPaid(paidAtIso: string = new Date().toISOString()): void {
+    const current = this.currentUserSignal();
+    if (!current) return;
+    this.currentUserSignal.set({ ...current, paidAt: paidAtIso });
   }
 
   private readToken(): string | null {

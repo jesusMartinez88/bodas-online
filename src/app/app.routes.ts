@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { authGuard, adminGuard } from './services/auth.guard';
+import { authGuard, adminGuard, paymentGuard } from './services/auth.guard';
 
 export const routes: Routes = [
   {
@@ -14,6 +14,34 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () => import('./components/login/login.component').then((m) => m.LoginComponent),
+  },
+  {
+    path: 'complete-payment',
+    loadComponent: () =>
+      import('./components/complete-payment/complete-payment.component').then(
+        (m) => m.CompletePaymentComponent,
+      ),
+    canActivate: [authGuard],
+  },
+  // Páginas de retorno de Stripe Hosted Checkout (`success_url` /
+  // `cancel_url`). Ambas exigen sesión pero NO `paymentGuard`: el
+  // usuario aún no ha pagado al llegar a `/payment/success` y debe
+  // poder visitar `/payment/cancel` aunque siga sin pagar.
+  {
+    path: 'payment/success',
+    loadComponent: () =>
+      import('./components/payment-success/payment-success.component').then(
+        (m) => m.PaymentSuccessComponent,
+      ),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'payment/cancel',
+    loadComponent: () =>
+      import('./components/payment-cancel/payment-cancel.component').then(
+        (m) => m.PaymentCancelComponent,
+      ),
+    canActivate: [authGuard],
   },
   {
     path: 'judith-jesus',
@@ -40,7 +68,10 @@ export const routes: Routes = [
     path: ':tenant/dashboard',
     loadComponent: () =>
       import('./components/dashboard/dashboard.component').then((m) => m.DashboardComponent),
-    canActivate: [authGuard],
+    // `authGuard` valida el JWT; `paymentGuard` se asegura de que el
+    // usuario haya pagado (paidAt !== null) antes de dejarle ver el
+    // panel. El admin se salta ambos en la práctica.
+    canActivate: [authGuard, paymentGuard],
   },
   {
     path: ':tenant',

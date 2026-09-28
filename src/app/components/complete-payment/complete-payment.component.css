@@ -1,0 +1,245 @@
+/* Reutilizamos los mismos estilos visuales que el paso 3 del
+   register, con un wrapper propio para que el scope sea claro. */
+
+.complete-payment-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 25%, #fbcfe8 50%, #fce7f3 75%, #fdf2f8 100%);
+  background-size: 400% 400%;
+  animation: cp-gradientShift 15s ease infinite;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes cp-gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.complete-payment-card {
+  width: 100%;
+  max-width: 480px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(253, 242, 248, 0.92) 100%);
+  backdrop-filter: blur(20px);
+  border-radius: 2.5rem;
+  box-shadow:
+    0 25px 70px rgba(190, 24, 93, 0.2),
+    0 0 0 1px rgba(236, 72, 153, 0.1) inset,
+    0 1px 0 rgba(255, 255, 255, 0.8) inset;
+  padding: 3rem 2.5rem;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  animation: cp-cardEntrance 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes cp-cardEntrance {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.register-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.payment-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #ec4899, #be185d);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 12px rgba(190, 24, 93, 0.25);
+}
+
+.register-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #1f2937;
+  letter-spacing: -0.5px;
+}
+
+.register-subtitle {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.payment-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.125rem;
+  background: linear-gradient(145deg, #fff1f2, #ffe4e6);
+  border: 1px solid rgba(190, 18, 60, 0.15);
+  border-radius: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.payment-summary__label {
+  display: block;
+  color: #1f2937;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.payment-summary__detail {
+  display: block;
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.payment-summary strong {
+  color: #be185d;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-label {
+  color: #4b5563;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 2px solid rgba(190, 24, 93, 0.15);
+  border-radius: 1rem;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: rgba(190, 24, 93, 0.45);
+  box-shadow: 0 0 0 4px rgba(190, 24, 93, 0.08);
+}
+
+.payment-fields-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 1rem 1.25rem;
+  border: none;
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 8px 24px rgba(190, 24, 93, 0.28);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(190, 24, 93, 0.32);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  filter: grayscale(0.2);
+}
+
+/* Contenedor del Payment Element de Stripe */
+.stripe-payment-element {
+  min-height: 280px;
+  padding: 0.875rem 1rem;
+  border: 2px solid rgba(190, 24, 93, 0.15);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.stripe-payment-element:focus-within {
+  border-color: rgba(190, 24, 93, 0.45);
+  box-shadow: 0 0 0 4px rgba(190, 24, 93, 0.08);
+}
+
+.payment-field-hint {
+  margin: 0.5rem 0 0;
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.payment-disclaimer {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.form-error {
+  background: linear-gradient(145deg, #fff1f2, #ffe4e6);
+  border: 1px solid rgba(190, 18, 60, 0.25);
+  color: #9f1239;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.875rem 1.125rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(190, 18, 60, 0.08);
+  text-align: center;
+}
+
+.payment-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.125rem;
+  border-radius: 1rem;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(253, 242, 248, 0.7));
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.payment-loading__spinner {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  border: 2px solid rgba(190, 24, 93, 0.25);
+  border-top-color: #be185d;
+  animation: cp-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes cp-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 540px) {
+  .complete-payment-card { padding: 2rem 1.5rem; }
+  .register-title { font-size: 1.4rem; }
+  .payment-fields-row { grid-template-columns: 1fr; }
+}

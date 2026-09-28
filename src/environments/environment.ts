@@ -4,6 +4,17 @@ export const environment = {
   apiBaseUrl: 'http://localhost:3000',
 
   /**
+   * Clave publishable de Stripe para el registro de pagos (paso 3
+   * del register). Déjala vacía en dev si quieres mantener el modo
+   * demo (botón simulador). Si la rellenas con una `pk_test_...`,
+   * el frontend mostrará el Payment Element real.
+   *
+   * Esta clave es segura de exponer en el navegador (así está
+   * diseñada por Stripe). La clave `secret` NUNCA debe salir del backend.
+   */
+  stripePublishableKey: '',
+
+  /**
    * Información de contacto mostrada en el footer compartido de las
    * páginas públicas (landing + /contacto) y en la sección de contacto.
    *

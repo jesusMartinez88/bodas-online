@@ -306,16 +306,16 @@
 
             <p
               class="form-hint gallery-uploader__count"
-              [class.gallery-uploader__count--full]="(form().galleryFiles.length + (form().galleryExistingUrls?.length ?? 0)) >= 12"
+              [class.gallery-uploader__count--full]="(form().galleryFiles.length + form().galleryExistingUrls.length) >= 12"
               aria-live="polite">
-              {{ form().galleryFiles.length + (form().galleryExistingUrls?.length ?? 0) }} fotos adjuntadas (máx. 12)
+              {{ form().galleryFiles.length + form().galleryExistingUrls.length }} fotos adjuntadas (máx. 12)
             </p>
 
             @if (galleryError(); as msg) {
               <div class="form-error" role="alert">{{ msg }}</div>
             }
 
-            @if ((form().galleryExistingUrls?.length ?? 0) > 0 || form().galleryFiles.length > 0) {
+            @if (form().galleryExistingUrls.length > 0 || form().galleryFiles.length > 0) {
               <ul class="gallery-preview">
                 @for (url of form().galleryExistingUrls; track url; let i = $index) {
                   <li class="gallery-preview__item">

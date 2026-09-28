@@ -1,8 +1,11 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  effect,
+  ElementRef,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -11,10 +14,12 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { LandingQuestionnaireService } from '../../services/landing-questionnaire.service';
 import { InvitationMediaService } from '../../services/invitation-media.service';
+import { PaymentService } from '../../services/payment.service';
 import {
   LandingQuestionnaireComponent,
   LandingQuestionnaireValue,
 } from '../landing-questionnaire/landing-questionnaire.component';
+import type { StripePaymentElement } from '@stripe/stripe-js';
 
 type UsernameStatus =
   | 'idle'
@@ -70,7 +75,9 @@ export async function detectImageKind(file: File): Promise<ImageKind | null> {
  *   2. Cuestionario inicial de la landing (fecha, invitados, color,
  *      servicios extra, etc.). Se guarda asociado al usuario recién
  *      creado en el mismo submit.
- *   3. Pago demo obligatorio.
+ *   3. Pago con Stripe (Payment Element). Si el backend no tiene
+ *      Stripe configurado, se muestra el modo demo anterior para no
+ *      bloquear el desarrollo local sin claves.
  *   4. Éxito → "Ir a mi Panel de Control".
  */
 @Component({
@@ -81,12 +88,70 @@ export async function detectImageKind(file: File): Promise<ImageKind | null> {
   imports: [FormsModule, LandingQuestionnaireComponent],
 })
 export class RegisterComponent {
+  constructor() {
+    /**
+     * `effect` que monta/desmonta el Payment Element cuando el
+     * contenedor DOM está disponible y `paymentMode === 'ready'`.
+     *
+     * Lo declaramos en el constructor (no como campo) para
+     * garantizar que `paymentService` y los demás campos ya estén
+     * inicializados cuando el callback se ejecute.
+     */
+    effect(() => {
+      const step = this.step();
+      const mode = this.paymentMode();
+      const container =
+        this.paymentElementContainer()?.nativeElement ?? null;
+
+      // Solo nos interesa el momento en que estamos en paso 3 con
+      // Stripe listo. En cualquier otro caso, desmontamos.
+      if (step !== 3) {
+        if (this.mountedPaymentElement) {
+          this.paymentService.destroyElements();
+          this.mountedPaymentElement = null;
+        }
+        return;
+      }
+
+      if (mode !== 'ready' || !container) return;
+
+      // Si ya tenemos un Element montado, no lo recreamos (Stripe
+      // se quejaría con "this element is already mounted").
+      if (this.mountedPaymentElement) return;
+
+      this.mountedPaymentElement =
+        this.paymentService.mountPaymentElement(container);
+    });
+  }
   protected readonly step = signal<1 | 2 | 3 | 4>(1);
   protected readonly processing = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly createdSlug = signal<string | null>(null);
   protected readonly paymentProcessing = signal(false);
   protected readonly paymentError = signal<string | null>(null);
+
+  /**
+   * Estado del checkout real (Stripe):
+   *  - `loading`   → estamos creando el PaymentIntent / montando el Element.
+   *  - `ready`     → el Payment Element está montado y listo para pagar.
+   *  - `unavailable`  → el backend no tiene Stripe configurado: mostrar demo.
+   *  - `error`     → falló la inicialización (red, claves inválidas, etc.).
+   */
+  protected readonly paymentMode = signal<
+    'loading' | 'ready' | 'unavailable' | 'error'
+  >('loading');
+  protected readonly paymentAmountMajor = signal<string>('59,00');
+  protected readonly paymentCurrency = signal<string>('eur');
+
+  /**
+   * Contenedor donde Stripe monta el Payment Element. Lo declaramos
+   * como `viewChild` para poder pasárselo al servicio cuando entremos
+   * en el paso 3.
+   */
+  private readonly paymentElementContainer =
+    viewChild<ElementRef<HTMLDivElement>>('paymentElement');
+
+  private mountedPaymentElement: StripePaymentElement | null = null;
 
   protected readonly usernameStatus = signal<UsernameStatus>('idle');
   protected readonly usernameMessage = signal<string | null>(null);
@@ -107,7 +172,6 @@ export class RegisterComponent {
   protected readonly coverUploadError = signal<boolean>(false);
 
   protected formData = {
-    names: '',
     username: '',
     email: '',
     password: '',
@@ -148,6 +212,7 @@ export class RegisterComponent {
   private authService = inject(AuthService);
   private questionnaireService = inject(LandingQuestionnaireService);
   private invitationMediaService = inject(InvitationMediaService);
+  private paymentService = inject(PaymentService);
   private router = inject(Router);
 
   /**
@@ -159,7 +224,6 @@ export class RegisterComponent {
     this.usernameMessage.set(null);
 
     if (
-      !this.formData.names ||
       !this.formData.username ||
       !this.formData.email ||
       !this.formData.password
@@ -352,6 +416,10 @@ export class RegisterComponent {
       this.createdSlug.set(response.slug);
       this.processing.set(false);
       this.step.set(3);
+      // Disparamos la inicialización del checkout de Stripe fuera del
+      // try/catch: un fallo aquí NO debe impedir mostrar el paso 3
+      // (caeríamos al modo demo).
+      void this.initializePayment();
     } catch (err: unknown) {
       this.processing.set(false);
       console.error('[register] register error:', err);
@@ -370,13 +438,132 @@ export class RegisterComponent {
     this.router.navigate([`/${slug}/dashboard`]);
   }
 
-  /** Pago local de desarrollo. En producción se sustituirá por el checkout real. */
-  completeDemoPayment() {
+  /**
+   * Inicializa el checkout de Stripe al entrar en el paso 3.
+   *
+   * Pasos:
+   *  1. Pedir `/api/payments/config` para saber si Stripe está activo.
+   *  2. Si no → `paymentMode = 'unavailable'` (mostramos demo).
+   *  3. Si sí → cargar Stripe.js, crear PaymentIntent, montar Elements.
+   *     `paymentMode` pasa a `'ready'` y el `effect` del constructor se
+   *     encarga de montar el Payment Element cuando el contenedor
+   *     DOM esté disponible.
+   *
+   * Si algo falla (red, claves inválidas), pasamos a `'error'` o
+   * `'unavailable'` según el punto de fallo, para no bloquear al
+   * usuario: el admin siempre puede actualizar `paidAt` manualmente.
+   */
+  private async initializePayment(): Promise<void> {
+    this.paymentMode.set('loading');
+    this.paymentError.set(null);
+
+    try {
+      const cfg = await this.paymentService.loadConfig();
+
+      // Para mostrar el importe formateado en el summary.
+      const amount = (cfg.amount ?? 0) / 100;
+      this.paymentAmountMajor.set(
+        amount.toLocaleString('es-ES', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
+      );
+      this.paymentCurrency.set((cfg.currency || 'eur').toUpperCase());
+
+      if (!cfg.enabled || !cfg.publishableKey) {
+        this.paymentMode.set('unavailable');
+        return;
+      }
+
+      const intent = await this.paymentService.createIntent();
+      const elements = await this.paymentService.createElements(
+        intent.clientSecret,
+      );
+
+      if (!elements) {
+        this.paymentMode.set('unavailable');
+        this.paymentError.set(
+          'No pudimos cargar el formulario de pago seguro. ' +
+            'Continúa en modo demo.',
+        );
+        return;
+      }
+
+      this.paymentMode.set('ready');
+    } catch (err) {
+      console.error('[register] initializePayment error:', err);
+      this.paymentMode.set('unavailable');
+      this.paymentError.set(
+        'No pudimos conectar con el servicio de pagos. ' +
+          'Continúa en modo demo.',
+      );
+    }
+  }
+
+  /**
+   * Confirmar el pago.
+   *
+   *   - En modo live (`ready`): llama a `confirmPayment` de Stripe.
+   *     Si devuelve `succeeded`, avanzamos al paso 4. Si requiere
+   *     3DS, Stripe redirige al challenge (el `return_url` apunta
+   *     a esta misma página con un query param que reactivaría el
+   *     flujo). El webhook `payment_intent.succeeded` es la fuente
+   *     de verdad: aunque el navegador se cierre, marcamos al user.
+   *
+   *   - En modo demo (`unavailable`): simulación local con timeout.
+   *     NO crea ningún PaymentIntent ni llama al backend.
+   */
+  async completePayment(): Promise<void> {
     if (this.paymentProcessing()) return;
+
     this.paymentError.set(null);
     this.paymentProcessing.set(true);
 
+    if (this.paymentMode() === 'ready') {
+      try {
+        const returnUrl = `${window.location.origin}/register?payment=return`;
+        const result = await this.paymentService.confirmPayment(returnUrl);
+
+        if (result.status === 'succeeded') {
+          // Marcamos `paidAt` optimistamente: el guard del dashboard
+          // lo consultará al navegar y no nos devolverá a /complete-payment.
+          this.authService.markAsPaid();
+          this.paymentProcessing.set(false);
+          this.paymentService.destroyElements();
+          this.step.set(4);
+          return;
+        }
+
+        if (result.status === 'processing') {
+          // Algunos bancos tardan en confirmar. Le decimos al usuario
+          // que espere: el webhook actualizará el panel cuando llegue.
+          this.paymentProcessing.set(false);
+          this.paymentError.set(
+            'Tu banco está procesando el pago. Te avisaremos en cuanto se confirme.',
+          );
+          return;
+        }
+
+        // failed u otros: mostramos el mensaje de Stripe.
+        this.paymentProcessing.set(false);
+        this.paymentError.set(
+          result.error ||
+            'El pago no se completó. Revisa los datos e inténtalo de nuevo.',
+        );
+        return;
+      } catch (err) {
+        console.error('[register] confirmPayment error:', err);
+        this.paymentProcessing.set(false);
+        this.paymentError.set(
+          'No pudimos procesar el pago. Inténtalo de nuevo en unos segundos.',
+        );
+        return;
+      }
+    }
+
+    // Modo demo (Stripe no configurado): simulación local.
     window.setTimeout(() => {
+      this.authService.markAsPaid();
       this.paymentProcessing.set(false);
       this.step.set(4);
     }, 700);

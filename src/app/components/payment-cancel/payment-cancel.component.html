@@ -1,0 +1,37 @@
+<div class="payment-cancel-container">
+  <div class="payment-cancel-card">
+    <span class="payment-cancel-badge">Pago cancelado</span>
+
+    <div class="payment-cancel-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="48" height="48">
+        <circle
+          cx="12"
+          cy="12"
+          r="9"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5" />
+        <path
+          d="M9 9l6 6M15 9l-6 6"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round" />
+      </svg>
+    </div>
+
+    <h2 class="payment-cancel-title">Has cancelado el pago</h2>
+    <p class="payment-cancel-subtitle">
+      Tranquilo, no te hemos cobrado nada. Puedes volver a intentarlo cuando
+      quieras desde la pantalla de pago, o seguir explorando la app.
+    </p>
+
+    <div class="payment-cancel-actions">
+      <button type="button" class="btn-primary" (click)="retryPayment()">
+        Volver a intentar el pago
+      </button>
+      <button type="button" class="btn-secondary" (click)="goHome()">
+        Ir al inicio
+      </button>
+    </div>
+  </div>
+</div>

@@ -279,6 +279,12 @@ export interface AuthUser {
   email: string | null;
   role: string;
   slug: string;
+  /**
+   * `null` hasta que el webhook de Stripe confirma el pago. El
+   * frontend puede actualizarlo optimistamente tras un pago
+   * exitoso (ver `AuthService.markAsPaid()`).
+   */
+  paidAt: string | null;
 }
 
 export interface AuthLoginResponse {
@@ -415,6 +421,66 @@ export interface AiGenerateRequest {
   guestName: string;
   songHint?: string;
   stream?: boolean;
+}
+
+/**
+ * Respuesta de `GET /api/payments/config`. Permite al frontend saber
+ * si el modo demo sigue activo o si debe mostrar el checkout real de
+ * Stripe. La publishable key está diseñada para vivir en el navegador.
+ */
+export interface PaymentConfig {
+  enabled: boolean;
+  publishableKey: string | null;
+  amount: number;
+  currency: string;
+  description: string;
+}
+
+/**
+ * Respuesta de `POST /api/payments/create-intent`. El frontend usa
+ * `clientSecret` para inicializar el Payment Element de Stripe y
+ * `paymentIntentId` para correlación/logs.
+ */
+export interface PaymentIntentResponse {
+  clientSecret: string;
+  paymentIntentId: string;
+  amount: number;
+  currency: string;
+  reused: boolean;
+}
+
+/**
+ * Respuesta de `POST /api/payments/create-checkout-session`. El frontend
+ * usa `url` para redirigir al cliente a la página hosted de Stripe con
+ * `window.location.href`. `sessionId` se devuelve también para
+ * correlación/logs (es el `cs_test_...` / `cs_live_...`).
+ */
+export interface CheckoutSessionResponse {
+  url: string;
+  sessionId: string;
+}
+
+/**
+ * Historial de pagos devuelto por `GET /api/payments/me`. El frontend
+ * lo usa para mostrar el estado del pago (succeeded/processing/failed)
+ * y permitir reintentos si el webhook aún no ha llegado.
+ */
+export interface PaymentRecord {
+  id: number;
+  userId: number;
+  stripePaymentIntentId: string;
+  amount: number;
+  currency: string;
+  status: string;
+  paymentMethod: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentsListResponse {
+  paid: boolean;
+  paidAt: string | null;
+  payments: PaymentRecord[];
 }
 
 export interface AiGenerateResponse {

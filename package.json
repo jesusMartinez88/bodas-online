@@ -46,6 +46,7 @@
     "@angular/platform-server": "^22.1.7",
     "@angular/router": "^22.1.7",
     "@angular/ssr": "^22.1.8",
+    "@stripe/stripe-js": "^9.17.0",
     "aos": "^2.3.4",
     "canvas-confetti": "^1.9.4",
     "express": "^5.2.1",

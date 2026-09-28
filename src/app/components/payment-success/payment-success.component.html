@@ -1,0 +1,159 @@
+<div class="payment-result-container">
+  <div class="payment-result-card">
+    <span class="payment-result-badge">
+      @switch (status()) {
+        @case ('loading') {
+          Verificando pago…
+        }
+        @case ('paid') {
+          Pago confirmado
+        }
+        @case ('pending') {
+          Pago en proceso
+        }
+        @case ('error') {
+          No pudimos verificar tu pago
+        }
+      }
+    </span>
+
+    <!-- ICONO según estado: success / spinner / clock / warning.
+         Usamos SVG inline (sin dependencias) para que el bundle no crezca. -->
+    @switch (status()) {
+      @case ('paid') {
+        <div class="payment-result-icon payment-result-icon--success" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="48" height="48">
+            <path
+              d="M5 12.5l4.5 4.5L19 7"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </div>
+      }
+      @case ('loading') {
+        <div class="payment-result-icon payment-result-icon--loading" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="48" height="48">
+            <circle
+              cx="12"
+              cy="12"
+              r="9"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-dasharray="42 18" />
+          </svg>
+        </div>
+      }
+      @case ('pending') {
+        <div class="payment-result-icon payment-result-icon--pending" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="48" height="48">
+            <circle
+              cx="12"
+              cy="12"
+              r="9"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5" />
+            <path
+              d="M12 7v5l3 2"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </div>
+      }
+      @case ('error') {
+        <div class="payment-result-icon payment-result-icon--error" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="48" height="48">
+            <path
+              d="M12 4l9 16H3z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linejoin="round" />
+            <path
+              d="M12 10v4"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round" />
+            <circle cx="12" cy="17" r="1" fill="currentColor" />
+          </svg>
+        </div>
+      }
+    }
+
+    <h2 class="payment-result-title">
+      @switch (status()) {
+        @case ('paid') {
+          ¡Gracias por tu compra!
+        }
+        @case ('loading') {
+          Confirmando tu pago con Stripe…
+        }
+        @case ('pending') {
+          Tu pago se está procesando
+        }
+        @case ('error') {
+          Algo no salió bien
+        }
+      }
+    </h2>
+
+    <p class="payment-result-subtitle">
+      @switch (status()) {
+        @case ('paid') {
+          Estamos activando tu cuenta. En un momento te llevamos a tu panel.
+        }
+        @case ('loading') {
+          Estamos hablando con Stripe para confirmar el cargo. Esto tarda unos segundos.
+        }
+        @case ('pending') {
+          El cargo ya pasó en tu tarjeta. El sistema está acabando de registrarlo.
+        }
+        @case ('error') {
+          {{ errorMessage() ?? 'Revisa tu conexión y vuelve a intentarlo.' }}
+        }
+      }
+    </p>
+
+    @if (sessionId(); as sid) {
+      <p class="payment-result-meta">
+        Referencia: <code>{{ sid }}</code>
+      </p>
+    }
+
+    @switch (status()) {
+      @case ('paid') {
+        <button type="button" class="btn-primary" (click)="goToDashboard()">
+          Ir a mi panel
+        </button>
+      }
+      @case ('pending') {
+        <div class="payment-result-actions">
+          <button type="button" class="btn-primary" (click)="retry()">
+            Reintentar verificación
+          </button>
+          <button type="button" class="btn-secondary" (click)="goToDashboard()">
+            Saltar al panel
+          </button>
+        </div>
+      }
+      @case ('error') {
+        <div class="payment-result-actions">
+          <button type="button" class="btn-primary" (click)="retry()">
+            Reintentar
+          </button>
+          <button type="button" class="btn-secondary" (click)="goToDashboard()">
+            Ir a mi panel
+          </button>
+        </div>
+      }
+    }
+  </div>
+</div>
