@@ -178,7 +178,7 @@ export class LandingComponent {
       category: 'Soporte',
       question: '¿Qué pasa si cambian los horarios o algún detalle antes de la boda?',
       answer:
-        'Puedés entrar a tu panel en cualquier momento, modificar cualquier dato y se actualiza al instante para todos tus invitados sin tener que volver a enviar nada.',
+        'Puedés entrar a tu panel en cualquier momento, modificar cualquier dato y se actualiza en menos de 24h para todos tus invitados sin tener que volver a enviar nada.',
     },
   ];
 
