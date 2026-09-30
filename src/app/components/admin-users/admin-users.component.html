@@ -1,223 +1,465 @@
 <section class="admin-users">
+  <!-- Cabecera principal -->
   <header class="admin-header">
-    <div>
-      <h1>👑 Panel de administración</h1>
-      <p class="subtitle">Usuarios registrados en la plataforma</p>
+    <div class="admin-header__brand">
+      <div class="admin-header__badge" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-header-icon">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="admin-header__title">Panel de Administración</h1>
+        <p class="admin-header__subtitle">Gestión centralizada de parejas, pagos y recursos de bodas</p>
+      </div>
     </div>
-    <div class="header-actions">
-      <div class="admin-stats" role="status" aria-live="polite">
-        <span class="stat-pill">
-          <strong>{{ totalCount() }}</strong> usuarios
-        </span>
-        <span class="stat-pill stat-pill--success">
-          <strong>{{ paidCount() }}</strong> pagados
-        </span>
-        <span class="stat-pill stat-pill--info">
-          <strong>{{ invitationCount() }}</strong> con invitación
-        </span>
-        <span class="stat-pill stat-pill--warning">
-          <strong>{{ noInvitationCount() }}</strong> sin invitación
-        </span>
-        @if (visitStats(); as vs) {
-          <span class="stat-pill stat-pill--visits" title="Hoy: {{ vs.todayVisits }} · Esta semana: {{ vs.weekVisits }}">
-            👁 <strong>{{ vs.totalVisits }}</strong> visitas
-            <span class="stat-pill__sub">hoy: {{ vs.todayVisits }}</span>
-          </span>
-        }
-      </div>
-      <div class="header-actions__buttons">
-        <button
-          type="button"
-          class="btn btn--ghost"
-          (click)="openAccountDialog()"
-          aria-label="Mi cuenta"
-          title="Cambiar mi contraseña o email"
-        >
-          ⚙️ Mi cuenta
-        </button>
-        <button
-          type="button"
-          class="btn btn--ghost logout-btn"
-          (click)="logout()"
-          aria-label="Cerrar sesión"
-          title="Cerrar sesión"
-        >
-          🚪 Cerrar sesión
-        </button>
-      </div>
+
+    <div class="admin-header__actions">
+      <button
+        type="button"
+        class="btn btn--header"
+        (click)="openAccountDialog()"
+        aria-label="Ajustes de mi cuenta"
+        title="Cambiar mi contraseña o email de admin"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <span>Mi Cuenta</span>
+      </button>
+
+      <button
+        type="button"
+        class="btn btn--header btn--logout"
+        (click)="logout()"
+        aria-label="Cerrar sesión"
+        title="Cerrar sesión de administrador"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span>Cerrar Sesión</span>
+      </button>
     </div>
   </header>
 
+  <!-- Métricas KPI SaaS -->
+  <app-admin-stats
+    [totalCount]="totalCount()"
+    [paidCount]="paidCount()"
+    [invitationCount]="invitationCount()"
+    [noInvitationCount]="noInvitationCount()"
+    [visitStats]="visitStats()"
+  />
+
+  <!-- Barra de herramientas: Búsqueda + Filtros por pestañas/chips + Recargar -->
   <div class="admin-toolbar">
-    <label class="search-field">
-      <span class="visually-hidden">Buscar usuarios</span>
-      <input
-        type="search"
-        placeholder="Buscar por nombre, email, slug u observaciones…"
-        [ngModel]="searchQuery()"
-        (ngModelChange)="onSearchChange($event)"
-        autocomplete="off"
-      />
-    </label>
-    <button
-      type="button"
-      class="btn btn--ghost"
-      (click)="loadUsers()"
-      [disabled]="isLoading()"
-      aria-label="Recargar lista de usuarios"
-    >
-      🔄 Recargar
-    </button>
+    <!-- Pestañas de estado -->
+    <div class="filter-tabs" role="tablist" aria-label="Filtrar por estado">
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="statusFilter() === 'all'"
+        class="filter-tab"
+        [class.filter-tab--active]="statusFilter() === 'all'"
+        (click)="setStatusFilter('all')"
+      >
+        <span>Todos</span>
+        <span class="filter-count">{{ totalCount() }}</span>
+      </button>
+
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="statusFilter() === 'paid'"
+        class="filter-tab"
+        [class.filter-tab--active]="statusFilter() === 'paid'"
+        (click)="setStatusFilter('paid')"
+      >
+        <span class="tab-dot tab-dot--success" aria-hidden="true"></span>
+        <span>Pagados</span>
+        <span class="filter-count filter-count--success">{{ paidCount() }}</span>
+      </button>
+
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="statusFilter() === 'pending'"
+        class="filter-tab"
+        [class.filter-tab--active]="statusFilter() === 'pending'"
+        (click)="setStatusFilter('pending')"
+      >
+        <span class="tab-dot tab-dot--warning" aria-hidden="true"></span>
+        <span>Pendientes</span>
+        <span class="filter-count filter-count--warning">{{ pendingCount() }}</span>
+      </button>
+
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="statusFilter() === 'has_invitation'"
+        class="filter-tab"
+        [class.filter-tab--active]="statusFilter() === 'has_invitation'"
+        (click)="setStatusFilter('has_invitation')"
+      >
+        <span class="tab-dot tab-dot--info" aria-hidden="true"></span>
+        <span>Con invitación</span>
+        <span class="filter-count filter-count--info">{{ invitationCount() }}</span>
+      </button>
+    </div>
+
+    <!-- Búsqueda y recargar -->
+    <div class="toolbar-search-actions">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          type="search"
+          placeholder="Buscar por pareja, email, slug o notas…"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearchChange($event)"
+          autocomplete="off"
+          class="search-input"
+          aria-label="Buscar usuarios"
+        />
+        @if (searchQuery()) {
+          <button
+            type="button"
+            class="search-clear"
+            (click)="onSearchChange('')"
+            aria-label="Limpiar búsqueda"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-xs">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="btn btn--ghost reload-btn"
+        (click)="loadUsers()"
+        [disabled]="isLoading()"
+        aria-label="Recargar lista de usuarios"
+        title="Recargar datos de usuarios"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="btn-icon"
+          [class.rotating]="isLoading()"
+          aria-hidden="true"
+        >
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        <span>Recargar</span>
+      </button>
+    </div>
   </div>
 
+  <!-- Alerta de error de acción -->
   @if (actionError(); as message) {
     <div class="alert alert--error" role="alert">
-      <span>{{ message }}</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="alert-icon">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span class="alert-text">{{ message }}</span>
       <button
         type="button"
         class="alert-close"
         (click)="actionError.set(null)"
-        aria-label="Cerrar aviso"
+        aria-label="Cerrar aviso de error"
       >
-        ✕
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-xs">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
       </button>
     </div>
   }
 
+  <!-- Estados de carga / error / tabla -->
   @if (isLoading()) {
     <div class="state-card" role="status" aria-live="polite">
-      <p>Cargando usuarios…</p>
+      <div class="spinner-large" aria-hidden="true"></div>
+      <p class="state-card__title">Cargando lista de usuarios…</p>
+      <p class="state-card__desc">Obteniendo datos actualizados de la plataforma</p>
     </div>
   } @else if (loadError(); as message) {
     <div class="state-card state-card--error" role="alert">
-      <p>{{ message }}</p>
+      <div class="error-icon-box" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="danger-svg">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <p class="state-card__title">Error al cargar usuarios</p>
+      <p class="state-card__desc">{{ message }}</p>
       <button type="button" class="btn btn--primary" (click)="loadUsers()">
-        Reintentar
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        <span>Reintentar</span>
       </button>
     </div>
   } @else if (filteredUsers().length === 0) {
     <div class="state-card">
-      <p>
-        @if (searchQuery()) {
-          No hay usuarios que coincidan con «{{ searchQuery() }}».
-        } @else {
-          Aún no hay usuarios registrados.
-        }
-      </p>
+      <div class="empty-icon-box" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="empty-svg">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </div>
+      @if (searchQuery()) {
+        <p class="state-card__title">Sin resultados para «{{ searchQuery() }}»</p>
+        <p class="state-card__desc">Prueba a buscar con otro término o limpia el filtro de búsqueda.</p>
+        <button type="button" class="btn btn--ghost" (click)="onSearchChange('')">
+          Limpiar búsqueda
+        </button>
+      } @else if (statusFilter() !== 'all') {
+        <p class="state-card__title">No hay usuarios con este filtro</p>
+        <p class="state-card__desc">No se encontraron parejas en la categoría seleccionada.</p>
+        <button type="button" class="btn btn--ghost" (click)="setStatusFilter('all')">
+          Ver todos los usuarios
+        </button>
+      } @else {
+        <p class="state-card__title">Aún no hay usuarios registrados</p>
+        <p class="state-card__desc">Las nuevas parejas que se registren aparecerán aquí automáticamente.</p>
+      }
     </div>
   } @else {
-    <div class="table-wrapper" role="region" aria-label="Lista de usuarios">
+    <!-- Tabla moderna de usuarios -->
+    <div class="table-wrapper" role="region" aria-label="Lista de parejas registradas">
       <table class="users-table">
         <thead>
           <tr>
-            <th scope="col">Usuario</th>
+            <th scope="col" class="th-user">Pareja / Usuario</th>
             <th scope="col">Email</th>
-            <th scope="col">Pagado</th>
+            <th scope="col">Estado Pago</th>
             <th scope="col">Invitación</th>
             <th scope="col">Actividad</th>
-            <th scope="col">Último login</th>
-            <th scope="col">Observaciones</th>
-            <th scope="col" class="actions-col">Acciones</th>
+            <th scope="col">Último Login</th>
+            <th scope="col">Notas</th>
+            <th scope="col" class="th-actions">Acciones</th>
           </tr>
         </thead>
         <tbody>
           @for (user of filteredUsers(); track user.id) {
             <tr [class.row--protected]="user.isProtected">
+              <!-- Usuario y Avatar -->
               <td>
                 <div class="user-cell">
-                  <span class="user-name">
-                    {{ user.username }}
-                    @if (user.role === 'admin') {
-                      <span class="badge badge--admin" title="Administrador">👑 admin</span>
-                    }
-                  </span>
-                  <span class="user-id">#{{ user.id }}</span>
+                  <div class="user-avatar" [class.user-avatar--admin]="user.role === 'admin'" aria-hidden="true">
+                    {{ getUserInitials(user.username) }}
+                  </div>
+                  <div class="user-details">
+                    <div class="user-name-row">
+                      <strong class="user-name">{{ user.username }}</strong>
+                      @if (user.role === 'admin') {
+                        <span class="badge badge--admin" title="Administrador de plataforma">
+                          <svg viewBox="0 0 24 24" fill="currentColor" class="badge-icon">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                          </svg>
+                          admin
+                        </span>
+                      }
+                    </div>
+                    <div class="user-subtext">
+                      <span class="user-id">#{{ user.id }}</span>
+                      <span class="user-slug">{{ user.slug }}</span>
+                    </div>
+                  </div>
                 </div>
               </td>
+
+              <!-- Email -->
               <td>
                 @if (user.email) {
-                  <a [href]="'mailto:' + user.email">{{ user.email }}</a>
+                  <a [href]="'mailto:' + user.email" class="email-link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="email-icon" aria-hidden="true">
+                      <rect width="20" height="16" x="2" y="4" rx="2"/>
+                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                    </svg>
+                    <span>{{ user.email }}</span>
+                  </a>
                 } @else {
-                  <span class="muted">—</span>
+                  <span class="muted-dash">—</span>
                 }
               </td>
+
+              <!-- Estado de pago con dot indicador -->
               <td>
                 @if (user.paid) {
-                  <span class="badge badge--success" title="Pagado el {{ formatDate(user.paidAt) }}">
-                    ✓ Pagado
+                  <span class="badge badge--success" [title]="'Pagado el ' + formatDate(user.paidAt)">
+                    <span class="badge-dot badge-dot--success"></span>
+                    <span>Pagado</span>
                   </span>
                 } @else {
-                  <span class="badge badge--muted">Pendiente</span>
+                  <span class="badge badge--pending" title="Pendiente de pago">
+                    <span class="badge-dot badge-dot--warning"></span>
+                    <span>Pendiente</span>
+                  </span>
                 }
               </td>
+
+              <!-- Estado de invitación con contadores -->
               <td>
                 @if (user.hasInvitation) {
-                  <span class="badge badge--info" title="Tiene contenido creado">
-                    ✓ Lista
+                  <span class="badge badge--info" title="Contenido creado y publicado">
+                    <span class="badge-dot badge-dot--info"></span>
+                    <span>Lista</span>
                   </span>
                 } @else {
-                  <span class="badge badge--muted">Sin crear</span>
+                  <span class="badge badge--muted" title="Sin contenido aún">
+                    <span class="badge-dot badge-dot--muted"></span>
+                    <span>Sin crear</span>
+                  </span>
                 }
-                <div class="muted small">
-                  {{ user.guestCount }} invitados · {{ user.contactCount }} contactos
+                <div class="activity-sub">
+                  <span>{{ user.guestCount }} invitados</span>
+                  <span class="dot-sep">·</span>
+                  <span>{{ user.contactCount }} contactos</span>
                 </div>
               </td>
-              <td class="muted small">
-                {{ user.tableCount }} mesas · {{ user.financeCount }} gastos ·
-                {{ user.todoCount }} tareas
+
+              <!-- Actividad (mesas, finanzas, tareas) -->
+              <td>
+                <div class="activity-pills">
+                  <span class="mini-pill" title="Mesas configuradas">{{ user.tableCount }} mesas</span>
+                  <span class="mini-pill" title="Gastos registrados">{{ user.financeCount }} gastos</span>
+                  <span class="mini-pill" title="Tareas pendientes">{{ user.todoCount }} tareas</span>
+                </div>
               </td>
-              <td class="muted">{{ formatDate(user.lastLoginAt) }}</td>
-              <td class="notes-cell">
+
+              <!-- Último login -->
+              <td>
+                <span class="login-date" [title]="formatDate(user.lastLoginAt)">
+                  {{ formatDate(user.lastLoginAt) }}
+                </span>
+              </td>
+
+              <!-- Notas internas -->
+              <td class="notes-col">
                 @if (user.notes) {
-                  <span class="notes-preview" [title]="user.notes">
+                  <span class="notes-text" [title]="user.notes">
                     {{ user.notes }}
                   </span>
                 } @else {
-                  <span class="muted">—</span>
+                  <span class="muted-dash">—</span>
                 }
               </td>
-              <td class="actions-col">
-                <div class="row-actions">
+
+              <!-- Botones de acción -->
+              <td class="th-actions">
+                <div class="actions-dropdown" [class.actions-dropdown--open]="isMenuOpen(user.id)">
                   <button
                     type="button"
-                    class="btn btn--small btn--ghost"
-                    (click)="openQuestionnaire(user)"
-                    [disabled]="user.isProtected"
-                    [attr.aria-disabled]="user.isProtected"
-                    [title]="user.isProtected ? 'El admin principal no tiene cuestionario' : 'Ver cuestionario inicial de la landing'"
+                    class="actions-trigger"
+                    (click)="toggleActionsMenu(user.id, $event)"
+                    [attr.aria-haspopup]="'menu'"
+                    [attr.aria-expanded]="isMenuOpen(user.id)"
+                    [attr.aria-label]="'Acciones de ' + user.username"
+                    [title]="'Acciones de ' + user.username"
                   >
-                    📋 Cuestionario
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="actions-trigger-svg" aria-hidden="true">
+                      <circle cx="12" cy="5" r="1.2" fill="currentColor"/>
+                      <circle cx="12" cy="12" r="1.2" fill="currentColor"/>
+                      <circle cx="12" cy="19" r="1.2" fill="currentColor"/>
+                    </svg>
                   </button>
-                  <button
-                    type="button"
-                    class="btn btn--small btn--ghost"
-                    (click)="openInvitation(user)"
-                    [disabled]="!canOpenInvitation(user)"
-                    [attr.aria-disabled]="!canOpenInvitation(user)"
-                    [title]="invitationButtonTitle(user)"
-                  >
-                    Ver invitación
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn--small btn--primary"
-                    (click)="openEditDialog(user)"
-                    [disabled]="user.isProtected"
-                    [attr.aria-disabled]="user.isProtected"
-                    [title]="user.isProtected ? 'El admin principal no se puede editar' : 'Editar usuario'"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn--small btn--danger"
-                    (click)="openDeleteConfirm(user)"
-                    [disabled]="user.isProtected"
-                    [attr.aria-disabled]="user.isProtected"
-                    [title]="user.isProtected ? 'El admin principal no se puede eliminar' : 'Eliminar usuario'"
-                  >
-                    Eliminar
-                  </button>
+
+                  @if (isMenuOpen(user.id)) {
+                    <ul class="actions-menu" role="menu" [attr.aria-label]="'Acciones de ' + user.username">
+                      <!-- Cuestionario -->
+                      <li role="none">
+                        <button
+                          type="button"
+                          role="menuitem"
+                          class="actions-menu__item actions-menu__item--brief"
+                          (click)="runMenuAction(user, 'brief')"
+                          [disabled]="user.isProtected"
+                          [attr.aria-disabled]="user.isProtected"
+                          [title]="user.isProtected ? 'El admin principal no tiene cuestionario' : 'Ver brief y cuestionario de landing'"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="actions-menu__icon" aria-hidden="true">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                          </svg>
+                          <span>Cuestionario</span>
+                        </button>
+                      </li>
+
+                      <!-- Ver invitación pública -->
+                      <li role="none">
+                        <button
+                          type="button"
+                          role="menuitem"
+                          class="actions-menu__item actions-menu__item--view"
+                          (click)="runMenuAction(user, 'view')"
+                          [disabled]="!canOpenInvitation(user)"
+                          [attr.aria-disabled]="!canOpenInvitation(user)"
+                          [title]="invitationButtonTitle(user)"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="actions-menu__icon" aria-hidden="true">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                            <polyline points="15 3 21 3 21 9"/>
+                            <line x1="10" y1="14" x2="21" y2="3"/>
+                          </svg>
+                          <span>Invitación</span>
+                        </button>
+                      </li>
+
+                      <!-- Editar -->
+                      <li role="none">
+                        <button
+                          type="button"
+                          role="menuitem"
+                          class="actions-menu__item actions-menu__item--edit"
+                          (click)="runMenuAction(user, 'edit')"
+                          [disabled]="user.isProtected"
+                          [attr.aria-disabled]="user.isProtected"
+                          [title]="user.isProtected ? 'El admin principal no se puede editar' : 'Editar usuario y recursos'"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="actions-menu__icon" aria-hidden="true">
+                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                          </svg>
+                          <span>Editar</span>
+                        </button>
+                      </li>
+
+                      <!-- Eliminar -->
+                      <li role="none">
+                        <button
+                          type="button"
+                          role="menuitem"
+                          class="actions-menu__item actions-menu__item--delete"
+                          (click)="runMenuAction(user, 'delete')"
+                          [disabled]="user.isProtected"
+                          [attr.aria-disabled]="user.isProtected"
+                          [title]="user.isProtected ? 'El admin principal no se puede eliminar' : 'Eliminar usuario'"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="actions-menu__icon" aria-hidden="true">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                          </svg>
+                          <span>Eliminar</span>
+                        </button>
+                      </li>
+                    </ul>
+                  }
                 </div>
               </td>
             </tr>
@@ -228,670 +470,58 @@
   }
 </section>
 
+<!-- Modales modulares -->
 @if (editingUser(); as user) {
-  <div
-    class="modal-overlay"
-    role="presentation"
-    tabindex="-1"
-    (keydown.escape)="closeEditDialog()"
-  >
-    <div
-      #editDialog
-      class="modal"
-      role="dialog"
-      aria-modal="true"
-      [attr.aria-labelledby]="'edit-title-' + user.id"
-    >
-      <header class="modal-header modal-header--edit-user">
-        <div class="modal-header__text">
-          <p class="modal-eyebrow">Cuenta de usuario · #{{ user.id }}</p>
-          <h2 [id]="'edit-title-' + user.id">Editar {{ user.username }}</h2>
-          <p class="modal-header__subtitle">Gestiona sus datos, estado y recursos de invitación.</p>
-        </div>
-        <button
-          type="button"
-          class="modal-close"
-          (click)="closeEditDialog()"
-          [disabled]="isSaving() || musicUploading()"
-          aria-label="Cerrar"
-        >
-          ✕
-        </button>
-      </header>
-
-      <form class="modal-body modal-body--edit-user" (ngSubmit)="saveEdit()">
-        @if (actionError(); as message) {
-          <div class="alert alert--error" role="alert">{{ message }}</div>
-        }
-
-        <div class="form-group">
-          <label [for]="'email-' + user.id">Email</label>
-          <input
-            #firstField
-            [id]="'email-' + user.id"
-            type="email"
-            [ngModel]="editForm().email"
-            (ngModelChange)="updateEditField('email', $event)"
-            name="email"
-            autocomplete="email"
-          />
-        </div>
-
-        <div class="form-group form-group--toggle">
-          <label [for]="'paid-' + user.id">Pagado</label>
-          <label class="toggle-switch">
-            <input
-              [id]="'paid-' + user.id"
-              type="checkbox"
-              [ngModel]="editForm().paid"
-              (ngModelChange)="updateEditField('paid', $event)"
-              name="paid"
-            />
-            <span class="toggle-slider"></span>
-            <span class="toggle-label">
-              {{ editForm().paid ? 'Marcado como pagado' : 'Pendiente de pago' }}
-            </span>
-          </label>
-        </div>
-
-        <div class="form-group form-group--toggle">
-          <label [for]="'invitation-' + user.id">Invitación completada</label>
-          <label class="toggle-switch">
-            <input
-              [id]="'invitation-' + user.id"
-              type="checkbox"
-              [ngModel]="editForm().invitationCompleted"
-              (ngModelChange)="updateEditField('invitationCompleted', $event)"
-              name="invitationCompleted"
-            />
-            <span class="toggle-slider"></span>
-            <span class="toggle-label">
-              {{ editForm().invitationCompleted ? 'Marcada como lista' : 'Aún no completada' }}
-            </span>
-          </label>
-        </div>
-
-        <div class="form-group">
-          <label [for]="'notes-' + user.id">Observaciones</label>
-          <textarea
-            [id]="'notes-' + user.id"
-            rows="4"
-            [ngModel]="editForm().notes"
-            (ngModelChange)="updateEditField('notes', $event)"
-            name="notes"
-            placeholder="Notas internas del admin sobre este usuario…"
-          ></textarea>
-          <small class="form-hint">Solo el admin puede ver y editar este campo.</small>
-        </div>
-
-        <div class="form-group">
-          <label [for]="'music-' + user.id">Música de fondo</label>
-          <div class="music-upload-card">
-            <div class="music-upload-card__copy">
-              <span class="music-upload-card__icon" aria-hidden="true">♫</span>
-              <div>
-                <strong>Personaliza su banda sonora</strong>
-                <small>MP3 · máximo 20 MB · reemplaza la anterior</small>
-              </div>
-            </div>
-            <label class="btn btn--small btn--ghost music-upload-card__button">
-              <span aria-hidden="true">↑</span> Elegir MP3
-              <input
-                [id]="'music-' + user.id"
-                type="file"
-                accept=".mp3,audio/mpeg,audio/mp3"
-                (change)="uploadMusic(user.id, $event)"
-                [disabled]="musicUploading() || isSaving()">
-            </label>
-          </div>
-          @if (musicUploading()) {
-            <small class="form-hint" role="status">Subiendo canción…</small>
-          }
-          @if (musicSuccess(); as message) {
-            <small class="form-hint form-hint--success" role="status">{{ message }}</small>
-          }
-          @if (musicError(); as message) {
-            <small class="form-hint form-hint--error" role="alert">{{ message }}</small>
-          }
-        </div>
-
-        <footer class="modal-footer">
-          <button
-            type="button"
-            class="btn btn--ghost"
-            (click)="closeEditDialog()"
-            [disabled]="isSaving() || musicUploading()"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            class="btn btn--primary"
-            [disabled]="isSaving()"
-          >
-            {{ isSaving() ? 'Guardando…' : 'Guardar cambios' }}
-          </button>
-        </footer>
-      </form>
-    </div>
-  </div>
+  <app-admin-edit-modal
+    [user]="user"
+    [isSaving]="isSaving()"
+    [actionError]="actionError()"
+    [musicUploading]="musicUploading()"
+    [musicError]="musicError()"
+    [musicSuccess]="musicSuccess()"
+    (save)="saveEdit($event)"
+    (uploadMusic)="uploadMusic($event)"
+    (close)="closeEditDialog()"
+  />
 }
 
 @if (confirmingDelete(); as user) {
-  <div
-    class="modal-overlay"
-    role="presentation"
-    tabindex="-1"
-    (keydown.escape)="closeDeleteConfirm()"
-  >
-    <div
-      class="modal modal--small"
-      role="alertdialog"
-      aria-modal="true"
-      aria-labelledby="delete-title"
-    >
-      <header class="modal-header">
-        <h2 id="delete-title">Eliminar usuario</h2>
-      </header>
-      <div class="modal-body">
-        @if (actionError(); as message) {
-          <div class="alert alert--error" role="alert">{{ message }}</div>
-        }
-        <p>
-          ¿Seguro que quieres eliminar a
-          <strong>{{ user.username }}</strong>?
-          Se borrarán también sus invitados, mesas, contactos y finanzas. Esta
-          acción no se puede deshacer.
-        </p>
-      </div>
-      <footer class="modal-footer">
-        <button
-          type="button"
-          class="btn btn--ghost"
-          (click)="closeDeleteConfirm()"
-          [disabled]="isDeleting()"
-        >
-          Cancelar
-        </button>
-        <button
-          type="button"
-          class="btn btn--danger"
-          (click)="confirmDelete()"
-          [disabled]="isDeleting()"
-        >
-          {{ isDeleting() ? 'Eliminando…' : 'Sí, eliminar' }}
-        </button>
-      </footer>
-    </div>
-  </div>
+  <app-admin-delete-modal
+    [user]="user"
+    [isDeleting]="isDeleting()"
+    [actionError]="actionError()"
+    (confirm)="confirmDelete()"
+    (close)="closeDeleteConfirm()"
+  />
 }
 
 @if (viewingQuestionnaire(); as user) {
-  <div
-    class="modal-overlay"
-    role="presentation"
-    tabindex="-1"
-    (keydown.escape)="closeQuestionnaire()"
-  >
-    <div
-      class="modal modal--questionnaire"
-      role="dialog"
-      aria-modal="true"
-      [attr.aria-labelledby]="'questionnaire-title-' + user.id"
-    >
-      <header class="modal-header modal-header--questionnaire">
-        <div class="modal-header__text">
-          <p class="modal-eyebrow">Brief de invitación · #{{ user.id }}</p>
-          <h2 [id]="'questionnaire-title-' + user.id">
-            Cuestionario de {{ user.username }}
-          </h2>
-          <p class="modal-header__subtitle">Resumen de preferencias y contenido para diseñar la landing.</p>
-        </div>
-        <button
-          type="button"
-          class="modal-close"
-          (click)="closeQuestionnaire()"
-          [disabled]="questionnaireLoading()"
-          aria-label="Cerrar"
-        >
-          ✕
-        </button>
-      </header>
-
-      <div class="modal-body questionnaire-modal-body">
-        @if (questionnaireLoading()) {
-          <p class="muted" role="status" aria-live="polite">Cargando cuestionario…</p>
-        } @else if (questionnaireError(); as msg) {
-          <div class="alert alert--error" role="alert">{{ msg }}</div>
-        } @else if (questionnaire(); as q) {
-          <p class="muted small questionnaire-meta">
-            Última actualización: {{ formatDate(q.updatedAt ?? q.createdAt) }}
-          </p>
-
-          <dl class="questionnaire-grid">
-            <div class="questionnaire-row">
-              <dt>Fecha de la boda</dt>
-              <dd>{{ formatShortDate(q.weddingDate) }}</dd>
-            </div>
-            <div class="questionnaire-row">
-              <dt>Estimación de invitados</dt>
-              <dd>{{ q.estimatedGuests ?? '—' }}</dd>
-            </div>
-            <div class="questionnaire-row">
-              <dt>Color predominante</dt>
-              <dd>{{ q.predominantColor || '—' }}</dd>
-            </div>
-            <div class="questionnaire-row">
-              <dt>Cuenta atrás</dt>
-              <dd>{{ formatYesNo(q.hasCountdown) }}</dd>
-            </div>
-
-            <div class="questionnaire-row questionnaire-row--section-header">
-              <dt colspan="2">
-                <span class="questionnaire-section-heading">
-                  <span class="questionnaire-section-icon" aria-hidden="true">✦</span>
-                  <span>
-                    <strong>Servicios extra</strong>
-                    <small>Elementos opcionales de la invitación</small>
-                  </span>
-                </span>
-              </dt>
-            </div>
-
-            <div class="questionnaire-row">
-              <dt>🚌 Autobús</dt>
-              <dd>{{ formatYesNo(q.hasBusService) }}</dd>
-            </div>
-            <div class="questionnaire-row">
-              <dt>🏨 Hotel para invitados</dt>
-              <dd>{{ formatYesNo(q.hasHotelService) }}</dd>
-            </div>
-            <div class="questionnaire-row">
-              <dt>🖼 Foto de portada</dt>
-              <dd>{{ formatYesNo(q.hasCoverPhoto) }}</dd>
-            </div>
-            <div class="questionnaire-row">
-              <dt>📖 Historia con fotos</dt>
-              <dd>{{ formatYesNo(q.hasOurStory) }}</dd>
-            </div>
-            @if (q.hasOurStory && parseOurStoryEntries(q.ourStoryEntries); as entries) {
-              <div class="questionnaire-row questionnaire-row--full">
-                <dt>🖼 Fotos de la historia</dt>
-                <dd>
-                  <ol class="story-entries">
-                    @for (entry of entries; track entry.url; let i = $index) {
-                      <li class="story-entry">
-                        <a [href]="entry.url" target="_blank" rel="noopener noreferrer" class="story-entry__thumb-link">
-                          <img
-                            [src]="entry.url"
-                            [alt]="entry.caption || ('Foto ' + (i + 1) + ' de la historia')"
-                            loading="lazy"
-                            class="story-entry__thumb">
-                        </a>
-                        <div class="story-entry__caption">
-                          <strong>{{ i + 1 }}.</strong>
-                          @if (entry.caption) {
-                            <span>{{ entry.caption }}</span>
-                          } @else {
-                            <span class="muted">Sin texto</span>
-                          }
-                        </div>
-                      </li>
-                    }
-                  </ol>
-                </dd>
-              </div>
-            } @else if (q.hasOurStory && parseLegacyOurStoryCaptions(q.ourStoryCaptions); as legacy) {
-              <div class="questionnaire-row questionnaire-row--full">
-                <dt>📝 Captions de la historia</dt>
-                <dd>
-                  <p class="story-legacy-notice">
-                    ⚠️ Datos anteriores: los captions se guardaron sin foto asociada.
-                    Si necesitas vincularlos, vuelve a pedírselos al cliente.
-                  </p>
-                  <ol class="captions-list">
-                    @for (caption of legacy; track $index; let i = $index) {
-                      <li><strong>{{ i + 1 }}.</strong> {{ caption }}</li>
-                    }
-                  </ol>
-                </dd>
-              </div>
-            }
-            <div class="questionnaire-row">
-              <dt>📸 Galería de fotos</dt>
-              <dd>{{ formatYesNo(q.hasGallery) }}</dd>
-            </div>
-            <div class="questionnaire-row">
-              <dt>📅 Añadir a la agenda</dt>
-              <dd>{{ formatYesNo(q.hasAddToCalendar) }}</dd>
-            </div>
-            <div class="questionnaire-row">
-              <dt>📍 Mapa del lugar</dt>
-              <dd>{{ formatYesNo(q.hasVenueMap) }}</dd>
-            </div>
-            <div class="questionnaire-row">
-              <dt>🎁 Lista de regalos (tarjeta cc)</dt>
-              <dd>{{ formatYesNo(q.hasGiftRegistry) }}</dd>
-            </div>
-            @if (q.hasGiftRegistry && q.giftBankAccount) {
-              <div class="questionnaire-row questionnaire-row--full">
-                <dt>🏦 Cuenta bancaria</dt>
-                <dd class="monospace">{{ q.giftBankAccount }}</dd>
-              </div>
-            }
-
-            <div class="questionnaire-row">
-              <dt>🎵 Música de fondo</dt>
-              <dd>{{ formatYesNo(q.hasBackgroundMusic) }}</dd>
-            </div>
-            @if (q.hasBackgroundMusic && q.backgroundMusicSong) {
-              <div class="questionnaire-row questionnaire-row--full">
-                <dt>🎶 Canción</dt>
-                <dd>{{ q.backgroundMusicSong }}</dd>
-              </div>
-            }
-
-            <div class="questionnaire-row questionnaire-row--section-header">
-              <dt colspan="2">
-                <span class="questionnaire-section-heading">
-                  <span class="questionnaire-section-icon" aria-hidden="true">⌁</span>
-                  <span>
-                    <strong>Contacto</strong>
-                    <small>Canales para comunicarse con la pareja</small>
-                  </span>
-                </span>
-              </dt>
-            </div>
-
-            <div class="questionnaire-row">
-              <dt>💬 Contactar con novio/novia</dt>
-              <dd>{{ formatYesNo(q.contactCouple) }}</dd>
-            </div>
-            @if (q.contactCouple) {
-              @if (q.contactGroomPhone) {
-                <div class="questionnaire-row">
-                  <dt>📞 Teléfono del novio</dt>
-                  <dd>{{ q.contactGroomPhone }}</dd>
-                </div>
-              }
-              @if (q.contactBridePhone) {
-                <div class="questionnaire-row">
-                  <dt>📞 Teléfono de la novia</dt>
-                  <dd>{{ q.contactBridePhone }}</dd>
-                </div>
-              }
-            }
-
-            @if (q.additionalServices) {
-              <div class="questionnaire-row questionnaire-row--full">
-                <dt>Otros servicios / detalles</dt>
-                <dd class="multiline">{{ q.additionalServices }}</dd>
-              </div>
-            }
-            @if (q.notes) {
-              <div class="questionnaire-row questionnaire-row--full">
-                <dt>Comentarios del cliente</dt>
-                <dd class="multiline">{{ q.notes }}</dd>
-              </div>
-            }
-          </dl>
-        } @else {
-          <p class="muted">
-            Este cliente todavía no ha rellenado el cuestionario inicial.
-          </p>
-        }
-      </div>
-
-      <footer class="modal-footer">
-        <button
-          type="button"
-          class="btn btn--ghost"
-          (click)="closeQuestionnaire()"
-          [disabled]="questionnaireLoading()"
-        >
-          Cerrar
-        </button>
-      </footer>
-    </div>
-  </div>
+  <app-admin-questionnaire-modal
+    [user]="user"
+    [questionnaire]="questionnaire()"
+    [isLoading]="questionnaireLoading()"
+    [error]="questionnaireError()"
+    (close)="closeQuestionnaire()"
+  />
 }
 
-@if (accountDialogOpen()) {
-  <div
-    class="modal-overlay"
-    role="presentation"
-    tabindex="-1"
-    (keydown.escape)="closeAccountDialog()"
-  >
-    <div
-      class="modal modal--account"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="account-title"
-    >
-      <header class="modal-header modal-header--account">
-        <div class="modal-header__text">
-          <h2 id="account-title">⚙️ Mi cuenta</h2>
-          <p class="modal-header__subtitle">
-            Gestiona tu email y contraseña de acceso
-          </p>
-        </div>
-        <button
-          type="button"
-          class="modal-close"
-          (click)="closeAccountDialog()"
-          [disabled]="accountSaving()"
-          aria-label="Cerrar"
-        >
-          ✕
-        </button>
-      </header>
-
-      <div class="modal-body">
-        @if (accountError(); as msg) {
-          <div class="alert alert--error" role="alert">
-            <span class="alert__icon" aria-hidden="true">⚠️</span>
-            <span class="alert__text">{{ msg }}</span>
-          </div>
-        }
-
-        <section class="account-section" aria-labelledby="account-email-heading">
-          <header class="account-section__header">
-            <span class="account-section__icon" aria-hidden="true">📧</span>
-            <div class="account-section__heading">
-              <h3 id="account-email-heading" class="account-section__title">
-                Cambiar email
-              </h3>
-              <p class="account-section__subtitle">
-                Actualiza la dirección con la que recibes los códigos de recuperación.
-              </p>
-            </div>
-          </header>
-
-          @if (emailSuccess(); as msg) {
-            <div class="alert alert--success" role="status">
-              <span class="alert__icon" aria-hidden="true">✅</span>
-              <span class="alert__text">{{ msg }}</span>
-            </div>
-          }
-
-          <div class="email-current">
-            <span class="email-current__label">Email actual</span>
-            <span class="email-current__chip" [class.email-current__chip--empty]="!accountCurrentEmail()">
-              {{ accountCurrentEmail() ?? '— sin email configurado —' }}
-            </span>
-          </div>
-
-          <form (ngSubmit)="submitEmailChange()" class="account-form">
-            <div class="form-group">
-              <label for="account-new-email">Nuevo email</label>
-              <div class="input-row">
-                <span class="input-row__icon" aria-hidden="true">📧</span>
-                <input
-                  id="account-new-email"
-                  type="email"
-                  autocomplete="email"
-                  [ngModel]="accountNewEmail()"
-                  (ngModelChange)="accountNewEmail.set($event)"
-                  name="newEmail"
-                  placeholder="tu@email.com"
-                  [disabled]="accountSaving()"
-                  required
-                />
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="account-email-password">Confirma con tu contraseña actual</label>
-              <div class="password-row">
-                <div class="input-row">
-                  <span class="input-row__icon" aria-hidden="true">🔒</span>
-                  <input
-                    id="account-email-password"
-                    [type]="accountEmailShowPassword() ? 'text' : 'password'"
-                    autocomplete="current-password"
-                    [ngModel]="accountEmailPassword()"
-                    (ngModelChange)="accountEmailPassword.set($event)"
-                    name="currentPasswordEmail"
-                    [disabled]="accountSaving()"
-                    required
-                  />
-                </div>
-                <button
-                  type="button"
-                  class="btn btn--icon"
-                  (click)="toggleAccountEmailPassword()"
-                  [disabled]="accountSaving()"
-                  [attr.aria-label]="accountEmailShowPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
-                  [title]="accountEmailShowPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
-                >
-                  {{ accountEmailShowPassword() ? '🙈' : '👁' }}
-                </button>
-              </div>
-            </div>
-            <div class="account-form__actions">
-              <button
-                type="submit"
-                class="btn btn--primary"
-                [disabled]="accountSaving()"
-              >
-                {{ accountSaving() ? 'Guardando…' : 'Actualizar email' }}
-              </button>
-            </div>
-          </form>
-        </section>
-
-        <section class="account-section" aria-labelledby="account-password-heading">
-          <header class="account-section__header">
-            <span class="account-section__icon" aria-hidden="true">🔒</span>
-            <div class="account-section__heading">
-              <h3 id="account-password-heading" class="account-section__title">
-                Cambiar contraseña
-              </h3>
-              <p class="account-section__subtitle">
-                Usa al menos 8 caracteres. No la reutilices de otros servicios.
-              </p>
-            </div>
-          </header>
-
-          @if (passwordSuccess(); as msg) {
-            <div class="alert alert--success" role="status">
-              <span class="alert__icon" aria-hidden="true">✅</span>
-              <span class="alert__text">{{ msg }}</span>
-            </div>
-          }
-
-          <form (ngSubmit)="submitPasswordChange()" class="account-form">
-            <div class="form-group">
-              <label for="account-current-password">Contraseña actual</label>
-              <div class="input-row">
-                <span class="input-row__icon" aria-hidden="true">🔑</span>
-                <input
-                  id="account-current-password"
-                  [type]="accountPasswordShowCurrent() ? 'text' : 'password'"
-                  autocomplete="current-password"
-                  [ngModel]="accountCurrentPassword()"
-                  (ngModelChange)="accountCurrentPassword.set($event)"
-                  name="currentPassword"
-                  [disabled]="accountSaving()"
-                  required
-                />
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="account-new-password">Nueva contraseña</label>
-              <div class="input-row">
-                <span class="input-row__icon" aria-hidden="true">🆕</span>
-                <input
-                  id="account-new-password"
-                  [type]="accountPasswordShowNew() ? 'text' : 'password'"
-                  autocomplete="new-password"
-                  [ngModel]="accountNewPassword()"
-                  (ngModelChange)="accountNewPassword.set($event)"
-                  name="newPassword"
-                  minlength="8"
-                  [disabled]="accountSaving()"
-                  required
-                />
-              </div>
-              <small class="form-hint">Mínimo 8 caracteres.</small>
-            </div>
-            <div class="form-group">
-              <label for="account-confirm-password">Repite la nueva contraseña</label>
-              <div class="input-row">
-                <span class="input-row__icon" aria-hidden="true">✅</span>
-                <input
-                  id="account-confirm-password"
-                  [type]="accountPasswordShowNew() ? 'text' : 'password'"
-                  autocomplete="new-password"
-                  [ngModel]="accountConfirmPassword()"
-                  (ngModelChange)="accountConfirmPassword.set($event)"
-                  name="confirmPassword"
-                  [disabled]="accountSaving()"
-                  required
-                />
-              </div>
-            </div>
-            <div class="account-form__extras">
-              <button
-                type="button"
-                class="btn btn--link"
-                (click)="toggleAccountPasswordVisibility()"
-                [disabled]="accountSaving()"
-              >
-                {{ accountPasswordShowNew() ? '🙈 Ocultar contraseñas' : '👁 Mostrar contraseñas' }}
-              </button>
-            </div>
-            <div class="account-form__actions">
-              <button
-                type="submit"
-                class="btn btn--primary"
-                [disabled]="accountSaving()"
-              >
-                {{ accountSaving() ? 'Guardando…' : 'Actualizar contraseña' }}
-              </button>
-            </div>
-          </form>
-        </section>
-      </div>
-
-      <footer class="modal-footer modal-footer--account">
-        <button
-          type="button"
-          class="btn btn--ghost"
-          (click)="closeAccountDialog()"
-          [disabled]="accountSaving()"
-        >
-          Cerrar
-        </button>
-      </footer>
-    </div>
-  </div>
-}
+<app-admin-account-modal
+  [isOpen]="accountDialogOpen()"
+  [currentEmail]="accountCurrentEmail()"
+  [isSaving]="accountSaving()"
+  [accountError]="accountError()"
+  [emailSuccess]="emailSuccess()"
+  [passwordSuccess]="passwordSuccess()"
+  (changeEmail)="changeAdminEmail($event)"
+  (changePassword)="changeAdminPassword($event)"
+  (close)="closeAccountDialog()"
+/>
 
 @if (exitConfirmService.showExitConfirm()) {
   <app-exit-confirm-modal />
 }
 
+<!-- Pie de página discreto -->
 <footer class="admin-footer" role="contentinfo">
-  © 2026 Admin Dashboard - BodasOnline {{ appVersion }}
+  <span>© 2026 Admin Dashboard · BodasOnline {{ appVersion }}</span>
 </footer>

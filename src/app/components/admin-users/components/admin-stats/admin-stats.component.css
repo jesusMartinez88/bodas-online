@@ -1,0 +1,164 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 1.15rem 1.25rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.02);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  border-color: #cbd5e1;
+}
+
+.stat-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.stat-card__label {
+  font-size: 0.825rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.stat-card__icon-box {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover .stat-card__icon-box {
+  transform: scale(1.08);
+}
+
+.svg-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+/* Card color themes */
+.stat-card--users .stat-card__icon-box {
+  background: #fdf2f8;
+  color: #be185d;
+}
+.stat-card--users:hover {
+  border-color: #fbcfe8;
+}
+
+.stat-card--paid .stat-card__icon-box {
+  background: #ecfdf5;
+  color: #059669;
+}
+.stat-card--paid:hover {
+  border-color: #a7f3d0;
+}
+
+.stat-card--invitations .stat-card__icon-box {
+  background: #eff6ff;
+  color: #2563eb;
+}
+.stat-card--invitations:hover {
+  border-color: #bfdbfe;
+}
+
+.stat-card--visits .stat-card__icon-box {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+.stat-card--visits:hover {
+  border-color: #ddd6fe;
+}
+
+.stat-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.stat-card__value {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.stat-card__value--muted {
+  color: #94a3b8;
+}
+
+.stat-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+}
+
+.stat-card__caption {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.stat-badge--success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.stat-badge--info {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.stat-badge--accent {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+}

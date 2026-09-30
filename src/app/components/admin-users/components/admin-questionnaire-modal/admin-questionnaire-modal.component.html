@@ -1,0 +1,494 @@
+<div
+  class="modal-backdrop"
+  role="presentation"
+  tabindex="-1"
+  (click)="onClose()"
+  (keydown.escape)="onClose()"
+>
+  <div
+    class="modal-card"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="'questionnaire-title-' + user().id"
+    (click)="$event.stopPropagation()"
+    (keydown)="$event.stopPropagation()"
+  >
+    <!-- Cabecera -->
+    <header class="modal-header">
+      <div class="modal-header__info">
+        <div class="brief-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+            <path d="M9 14h6"/>
+            <path d="M9 10h6"/>
+            <path d="M9 18h4"/>
+          </svg>
+        </div>
+        <div>
+          <div class="modal-header__eyebrow">
+            <span>Brief de Landing · Usuario #{{ user().id }}</span>
+            <span class="eyebrow-slug">{{ user().slug }}</span>
+          </div>
+          <h2 [id]="'questionnaire-title-' + user().id" class="modal-header__title">
+            Cuestionario de {{ user().username }}
+          </h2>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="btn-close"
+        (click)="onClose()"
+        [disabled]="isLoading()"
+        aria-label="Cerrar modal de cuestionario"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Contenido del modal -->
+    <div class="modal-body">
+      @if (isLoading()) {
+        <div class="loading-state" role="status" aria-live="polite">
+          <div class="spinner" aria-hidden="true"></div>
+          <p>Cargando cuestionario de la landing…</p>
+        </div>
+      } @else if (error(); as msg) {
+        <div class="alert alert--error" role="alert">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="alert-icon">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>{{ msg }}</span>
+        </div>
+      } @else if (questionnaire(); as q) {
+        <!-- Meta info -->
+        <div class="meta-banner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="meta-icon">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span>Última actualización: <strong>{{ formatDate(q.updatedAt ?? q.createdAt) }}</strong></span>
+        </div>
+
+        <!-- Métricas clave -->
+        <div class="section-title">
+          <span>Datos Clave del Evento</span>
+        </div>
+
+        <div class="cards-grid">
+          <!-- Fecha de la boda -->
+          <div class="info-card">
+            <div class="info-card__icon info-card__icon--rose" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-sm">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </div>
+            <div class="info-card__content">
+              <span class="info-card__label">Fecha de la boda</span>
+              <span class="info-card__value">{{ formatShortDate(q.weddingDate) }}</span>
+            </div>
+          </div>
+
+          <!-- Estimación de invitados -->
+          <div class="info-card">
+            <div class="info-card__icon info-card__icon--blue" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-sm">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+            <div class="info-card__content">
+              <span class="info-card__label">Estimación invitados</span>
+              <span class="info-card__value">{{ q.estimatedGuests ?? '—' }}</span>
+            </div>
+          </div>
+
+          <!-- Color predominante -->
+          <div class="info-card">
+            <div class="info-card__icon info-card__icon--amber" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-sm">
+                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>
+                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
+                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>
+                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
+              </svg>
+            </div>
+            <div class="info-card__content">
+              <span class="info-card__label">Color predominante</span>
+              <span class="info-card__value">
+                @if (q.predominantColor) {
+                  <span class="color-badge">
+                    <span class="color-swatch" [style.background-color]="q.predominantColor"></span>
+                    {{ q.predominantColor }}
+                  </span>
+                } @else {
+                  —
+                }
+              </span>
+            </div>
+          </div>
+
+          <!-- Cuenta atrás -->
+          <div class="info-card">
+            <div class="info-card__icon info-card__icon--emerald" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-sm">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <div class="info-card__content">
+              <span class="info-card__label">Cuenta atrás</span>
+              <span class="info-card__value">
+                <span class="status-chip" [class.status-chip--yes]="q.hasCountdown === 1" [class.status-chip--no]="q.hasCountdown === 0">
+                  {{ formatYesNo(q.hasCountdown) }}
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Servicios extra -->
+        <div class="section-title">
+          <span>Servicios y Módulos de la Invitación</span>
+        </div>
+
+        <div class="services-table">
+          <!-- Autobús -->
+          <div class="service-row">
+            <div class="service-row__name">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="service-icon">
+                <path d="M8 6v6"/>
+                <path d="M15 6v6"/>
+                <path d="M2 12h19.6"/>
+                <path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.6-.2-1.1-.5-1.6-.3-.6-.8-1-1.3-1.4L18 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12"/>
+                <circle cx="7" cy="18" r="2"/>
+                <circle cx="15" cy="18" r="2"/>
+              </svg>
+              <span>Servicio de autobús</span>
+            </div>
+            <span class="status-chip" [class.status-chip--yes]="q.hasBusService === 1" [class.status-chip--no]="q.hasBusService === 0">
+              {{ formatYesNo(q.hasBusService) }}
+            </span>
+          </div>
+
+          <!-- Hotel -->
+          <div class="service-row">
+            <div class="service-row__name">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="service-icon">
+                <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
+                <path d="M6 12H4a2 2 0 0 0-2 2v8h4"/>
+                <path d="M18 9h2a2 2 0 0 1 2 2v11h-4"/>
+                <path d="M10 6h4"/>
+                <path d="M10 10h4"/>
+                <path d="M10 14h4"/>
+                <path d="M10 18h4"/>
+              </svg>
+              <span>Hotel para invitados</span>
+            </div>
+            <span class="status-chip" [class.status-chip--yes]="q.hasHotelService === 1" [class.status-chip--no]="q.hasHotelService === 0">
+              {{ formatYesNo(q.hasHotelService) }}
+            </span>
+          </div>
+
+          <!-- Portada -->
+          <div class="service-row">
+            <div class="service-row__name">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="service-icon">
+                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                <circle cx="9" cy="9" r="2"/>
+                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+              </svg>
+              <span>Foto de portada</span>
+            </div>
+            <span class="status-chip" [class.status-chip--yes]="q.hasCoverPhoto === 1" [class.status-chip--no]="q.hasCoverPhoto === 0">
+              {{ formatYesNo(q.hasCoverPhoto) }}
+            </span>
+          </div>
+
+          <!-- Nuestra historia -->
+          <div class="service-row">
+            <div class="service-row__name">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="service-icon">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                <path d="M6 6h10"/>
+                <path d="M6 10h10"/>
+              </svg>
+              <span>Historia con fotos</span>
+            </div>
+            <span class="status-chip" [class.status-chip--yes]="q.hasOurStory === 1" [class.status-chip--no]="q.hasOurStory === 0">
+              {{ formatYesNo(q.hasOurStory) }}
+            </span>
+          </div>
+
+          <!-- Galería -->
+          <div class="service-row">
+            <div class="service-row__name">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="service-icon">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              <span>Galería fotográfica</span>
+            </div>
+            <span class="status-chip" [class.status-chip--yes]="q.hasGallery === 1" [class.status-chip--no]="q.hasGallery === 0">
+              {{ formatYesNo(q.hasGallery) }}
+            </span>
+          </div>
+
+          <!-- Añadir al calendario -->
+          <div class="service-row">
+            <div class="service-row__name">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="service-icon">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+                <line x1="12" y1="14" x2="12" y2="18"/>
+                <line x1="10" y1="16" x2="14" y2="16"/>
+              </svg>
+              <span>Botón añadir a agenda (Google/Apple)</span>
+            </div>
+            <span class="status-chip" [class.status-chip--yes]="q.hasAddToCalendar === 1" [class.status-chip--no]="q.hasAddToCalendar === 0">
+              {{ formatYesNo(q.hasAddToCalendar) }}
+            </span>
+          </div>
+
+          <!-- Mapa del lugar -->
+          <div class="service-row">
+            <div class="service-row__name">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="service-icon">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              <span>Ubicación y mapa del lugar</span>
+            </div>
+            <span class="status-chip" [class.status-chip--yes]="q.hasVenueMap === 1" [class.status-chip--no]="q.hasVenueMap === 0">
+              {{ formatYesNo(q.hasVenueMap) }}
+            </span>
+          </div>
+
+          <!-- Lista de regalos -->
+          <div class="service-row">
+            <div class="service-row__name">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="service-icon">
+                <polyline points="20 12 20 22 4 22 4 12"/>
+                <rect width="20" height="5" x="2" y="7"/>
+                <line x1="12" y1="22" x2="12" y2="7"/>
+                <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+                <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+              </svg>
+              <span>Lista de regalos / tarjeta cc</span>
+            </div>
+            <span class="status-chip" [class.status-chip--yes]="q.hasGiftRegistry === 1" [class.status-chip--no]="q.hasGiftRegistry === 0">
+              {{ formatYesNo(q.hasGiftRegistry) }}
+            </span>
+          </div>
+
+          <!-- Música de fondo -->
+          <div class="service-row">
+            <div class="service-row__name">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="service-icon">
+                <path d="M9 18V5l12-2v13"/>
+                <circle cx="6" cy="18" r="3"/>
+                <circle cx="18" cy="16" r="3"/>
+              </svg>
+              <span>Música de fondo activa</span>
+            </div>
+            <span class="status-chip" [class.status-chip--yes]="q.hasBackgroundMusic === 1" [class.status-chip--no]="q.hasBackgroundMusic === 0">
+              {{ formatYesNo(q.hasBackgroundMusic) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Cuenta bancaria si aplica -->
+        @if (q.hasGiftRegistry && q.giftBankAccount) {
+          <div class="bank-card">
+            <div class="bank-card__header">
+              <div class="bank-card__title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-sm">
+                  <rect width="20" height="14" x="2" y="5" rx="2"/>
+                  <line x1="2" y1="10" x2="22" y2="10"/>
+                </svg>
+                <span>Cuenta Bancaria (IBAN)</span>
+              </div>
+              <button
+                type="button"
+                class="btn-copy"
+                (click)="copyBankAccount(q.giftBankAccount)"
+                title="Copiar número de cuenta"
+              >
+                @if (copiedBank()) {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-xs">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <span>¡Copiado!</span>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-xs">
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                  </svg>
+                  <span>Copiar IBAN</span>
+                }
+              </button>
+            </div>
+            <code class="bank-iban">{{ q.giftBankAccount }}</code>
+          </div>
+        }
+
+        <!-- Canción de fondo solicitada -->
+        @if (q.hasBackgroundMusic && q.backgroundMusicSong) {
+          <div class="song-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-sm song-icon">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="10 8 16 12 10 16 10 8"/>
+            </svg>
+            <div>
+              <span class="song-card__label">Canción elegida por la pareja</span>
+              <strong class="song-card__title">{{ q.backgroundMusicSong }}</strong>
+            </div>
+          </div>
+        }
+
+        <!-- Fotos de la Historia -->
+        @if (q.hasOurStory) {
+          @if (parseOurStoryEntries(q.ourStoryEntries); as entries) {
+            <div class="story-section">
+              <div class="section-title">
+                <span>Fotos de su Historia ({{ entries.length }})</span>
+              </div>
+              <div class="story-grid">
+                @for (entry of entries; track entry.url; let i = $index) {
+                  <div class="story-card">
+                    <a [href]="entry.url" target="_blank" rel="noopener noreferrer" class="story-card__img-link">
+                      <img
+                        [src]="entry.url"
+                        [alt]="entry.caption || ('Foto ' + (i + 1))"
+                        loading="lazy"
+                        class="story-card__img"
+                      />
+                      <span class="story-card__overlay">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-sm">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                          <polyline points="15 3 21 3 21 9"/>
+                          <line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                      </span>
+                    </a>
+                    <div class="story-card__caption">
+                      <span class="story-index">#{{ i + 1 }}</span>
+                      <p>{{ entry.caption || 'Sin descripción' }}</p>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          } @else if (parseLegacyOurStoryCaptions(q.ourStoryCaptions); as legacy) {
+            <div class="story-section">
+              <div class="section-title">
+                <span>Textos de su Historia (Formato antiguo)</span>
+              </div>
+              <div class="legacy-alert">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-sm">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>Estos textos se guardaron sin imagen asociada en la versión previa.</span>
+              </div>
+              <ol class="legacy-list">
+                @for (caption of legacy; track $index; let i = $index) {
+                  <li><strong>{{ i + 1 }}.</strong> {{ caption }}</li>
+                }
+              </ol>
+            </div>
+          }
+        }
+
+        <!-- Canales de Contacto -->
+        <div class="section-title">
+          <span>Contacto Directo con la Pareja</span>
+        </div>
+
+        <div class="contacts-grid">
+          @if (q.contactGroomPhone) {
+            <div class="contact-pill">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="contact-icon">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+              <div>
+                <span class="contact-label">Teléfono Novio</span>
+                <a [href]="'tel:' + q.contactGroomPhone" class="contact-value">{{ q.contactGroomPhone }}</a>
+              </div>
+            </div>
+          }
+          @if (q.contactBridePhone) {
+            <div class="contact-pill">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="contact-icon">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+              <div>
+                <span class="contact-label">Teléfono Novia</span>
+                <a [href]="'tel:' + q.contactBridePhone" class="contact-value">{{ q.contactBridePhone }}</a>
+              </div>
+            </div>
+          }
+          @if (!q.contactGroomPhone && !q.contactBridePhone) {
+            <div class="empty-inline">No indicaron teléfonos directos.</div>
+          }
+        </div>
+
+        <!-- Observaciones / Comentarios -->
+        @if (q.additionalServices || q.notes) {
+          <div class="notes-grid">
+            @if (q.additionalServices) {
+              <div class="note-box">
+                <strong class="note-box__title">Servicios adicionales pedidos:</strong>
+                <p>{{ q.additionalServices }}</p>
+              </div>
+            }
+            @if (q.notes) {
+              <div class="note-box">
+                <strong class="note-box__title">Comentarios de la pareja:</strong>
+                <p>{{ q.notes }}</p>
+              </div>
+            }
+          </div>
+        }
+      } @else {
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="empty-icon">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+          <p>Este cliente todavía no ha completado el cuestionario inicial de la landing.</p>
+        </div>
+      }
+    </div>
+
+    <!-- Pie del modal -->
+    <footer class="modal-footer">
+      <button
+        type="button"
+        class="btn btn--secondary"
+        (click)="onClose()"
+      >
+        Cerrar
+      </button>
+    </footer>
+  </div>
+</div>

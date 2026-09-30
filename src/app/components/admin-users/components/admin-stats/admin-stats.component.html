@@ -1,0 +1,97 @@
+<div class="stats-grid" role="region" aria-label="Métricas de la plataforma">
+  <!-- Tarjeta 1: Total Usuarios -->
+  <article class="stat-card stat-card--users">
+    <div class="stat-card__header">
+      <span class="stat-card__label">Total Parejas</span>
+      <div class="stat-card__icon-box" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+    </div>
+    <div class="stat-card__content">
+      <span class="stat-card__value">{{ totalCount() }}</span>
+      <div class="stat-card__meta">
+        <span class="stat-card__caption">Cuentas registradas</span>
+      </div>
+    </div>
+  </article>
+
+  <!-- Tarjeta 2: Pagados -->
+  <article class="stat-card stat-card--paid">
+    <div class="stat-card__header">
+      <span class="stat-card__label">Cuentas Pagadas</span>
+      <div class="stat-card__icon-box" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <line x1="2" y1="10" x2="22" y2="10"/>
+          <circle cx="16" cy="15" r="1"/>
+        </svg>
+      </div>
+    </div>
+    <div class="stat-card__content">
+      <span class="stat-card__value">{{ paidCount() }}</span>
+      <div class="stat-card__meta">
+        <span class="stat-badge stat-badge--success">
+          <span class="badge-dot"></span>
+          {{ paidPercentage() }}% de conversión
+        </span>
+        <span class="stat-card__caption">{{ totalCount() - paidCount() }} pendientes</span>
+      </div>
+    </div>
+  </article>
+
+  <!-- Tarjeta 3: Con Invitación -->
+  <article class="stat-card stat-card--invitations">
+    <div class="stat-card__header">
+      <span class="stat-card__label">Con Invitación</span>
+      <div class="stat-card__icon-box" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon">
+          <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+        </svg>
+      </div>
+    </div>
+    <div class="stat-card__content">
+      <span class="stat-card__value">{{ invitationCount() }}</span>
+      <div class="stat-card__meta">
+        <span class="stat-badge stat-badge--info">
+          <span class="badge-dot"></span>
+          {{ invitationPercentage() }}% activas
+        </span>
+        <span class="stat-card__caption">{{ noInvitationCount() }} sin crear</span>
+      </div>
+    </div>
+  </article>
+
+  <!-- Tarjeta 4: Visitas Globales -->
+  <article class="stat-card stat-card--visits">
+    <div class="stat-card__header">
+      <span class="stat-card__label">Visitas Globales</span>
+      <div class="stat-card__icon-box" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon">
+          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </div>
+    </div>
+    <div class="stat-card__content">
+      @if (visitStats(); as vs) {
+        <span class="stat-card__value">{{ vs.totalVisits }}</span>
+        <div class="stat-card__meta">
+          <span class="stat-badge stat-badge--accent">
+            Hoy: <strong>{{ vs.todayVisits }}</strong>
+          </span>
+          <span class="stat-card__caption">Semana: {{ vs.weekVisits }}</span>
+        </div>
+      } @else {
+        <span class="stat-card__value stat-card__value--muted">—</span>
+        <div class="stat-card__meta">
+          <span class="stat-card__caption">Sin datos de visitas</span>
+        </div>
+      }
+    </div>
+  </article>
+</div>
