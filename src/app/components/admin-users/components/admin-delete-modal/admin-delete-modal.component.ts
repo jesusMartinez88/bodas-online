@@ -26,19 +26,27 @@ export class AdminDeleteModalComponent {
   actionError = input<string | null>(null);
 
   confirm = output<void>();
-  close = output<void>();
+  closed = output<void>();
 
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent) {
     if (!isPlatformBrowser(this.platformId)) return;
     if (event.key === 'Escape' && !this.isDeleting()) {
-      this.close.emit();
+      this.closed.emit();
     }
   }
 
   onClose() {
     if (this.isDeleting()) return;
-    this.close.emit();
+    this.closed.emit();
+  }
+
+  onBackdropClick(event: MouseEvent) {
+    // Solo cierra si el click fue directamente sobre el backdrop,
+    // no cuando se propaga desde la modal-card.
+    if (event.target === event.currentTarget) {
+      this.onClose();
+    }
   }
 
   onConfirm() {

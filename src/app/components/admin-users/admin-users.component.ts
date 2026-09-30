@@ -100,6 +100,12 @@ export class AdminUsersComponent implements OnInit {
 
   // Estado del menú de acciones desplegable por fila
   openMenuUserId = signal<number | null>(null);
+  menuPosition = signal<{ top: number; left: number } | null>(null);
+  menuUser = computed<AdminUser | null>(() => {
+    const id = this.openMenuUserId();
+    if (id === null) return null;
+    return this.users().find((u) => u.id === id) ?? null;
+  });
 
   protected readonly appVersion = this.versionService.getFullVersion();
 
@@ -406,13 +412,54 @@ export class AdminUsersComponent implements OnInit {
   // --- Menú de acciones desplegable ---
   toggleActionsMenu(userId: number, event: MouseEvent) {
     event.stopPropagation();
-    this.openMenuUserId.update((current) =>
-      current === userId ? null : userId,
-    );
+    if (this.openMenuUserId() === userId) {
+      this.closeActionsMenu();
+      return;
+    }
+
+    const trigger = event.currentTarget as HTMLElement | null;
+    this.openMenuUserId.set(userId);
+    this.menuPosition.set(null);
+
+    if (!trigger) return;
+
+    // Mide el menú en el siguiente frame para colocar de forma fiable
+    // y poder hacer flip vertical/horizontal cuando no cabe en el viewport.
+    requestAnimationFrame(() => {
+      if (this.openMenuUserId() !== userId) return; // se cerró antes de medir
+      const menuEl = this.host.nativeElement.querySelector(
+        '.actions-menu',
+      ) as HTMLElement | null;
+      if (!menuEl) return;
+      const rect = trigger.getBoundingClientRect();
+      const menuWidth = menuEl.offsetWidth;
+      const menuHeight = menuEl.offsetHeight;
+      const margin = 8;
+      const gap = 6;
+
+      let top = rect.bottom + gap;
+      // Flip vertical si no cabe debajo
+      if (top + menuHeight > window.innerHeight - margin) {
+        top = rect.top - menuHeight - gap;
+      }
+      if (top < margin) top = margin;
+
+      // Por defecto, alineado a la derecha del trigger
+      let left = rect.right - menuWidth;
+      // Si se sale por la izquierda, ajustar
+      if (left < margin) left = margin;
+      // Si se sale por la derecha, ajustar
+      if (left + menuWidth > window.innerWidth - margin) {
+        left = window.innerWidth - menuWidth - margin;
+      }
+
+      this.menuPosition.set({ top, left });
+    });
   }
 
   closeActionsMenu() {
     this.openMenuUserId.set(null);
+    this.menuPosition.set(null);
   }
 
   isMenuOpen(userId: number): boolean {
@@ -463,6 +510,22 @@ export class AdminUsersComponent implements OnInit {
 
   @HostListener('document:keydown.escape')
   onEscape() {
+    if (this.openMenuUserId() !== null) {
+      this.closeActionsMenu();
+    }
+  }
+
+  // Al hacer scroll o resize, cierra el menú flotante para que no quede
+  // descolocado (las coordenadas fixed pierden su ancla visual).
+  @HostListener('window:scroll')
+  onWindowScroll() {
+    if (this.openMenuUserId() !== null) {
+      this.closeActionsMenu();
+    }
+  }
+
+  @HostListener('window:resize')
+  onWindowResize() {
     if (this.openMenuUserId() !== null) {
       this.closeActionsMenu();
     }

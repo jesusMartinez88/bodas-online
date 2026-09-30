@@ -43,7 +43,7 @@ export class AdminEditModalComponent implements OnInit {
 
   save = output<EditFormState>();
   uploadMusic = output<{ userId: number; event: Event }>();
-  close = output<void>();
+  closed = output<void>();
 
   private firstFieldRef = viewChild<ElementRef<HTMLElement>>('firstField');
   private dialogRef = viewChild<ElementRef<HTMLElement>>('editDialog');
@@ -99,7 +99,7 @@ export class AdminEditModalComponent implements OnInit {
 
   onClose() {
     if (this.isSaving() || this.musicUploading()) return;
-    this.close.emit();
+    this.closed.emit();
   }
 
   @HostListener('document:keydown', ['$event'])

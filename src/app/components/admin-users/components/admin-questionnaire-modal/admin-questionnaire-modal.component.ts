@@ -27,7 +27,7 @@ export class AdminQuestionnaireModalComponent {
   isLoading = input<boolean>(false);
   error = input<string | null>(null);
 
-  close = output<void>();
+  closed = output<void>();
 
   copiedBank = signal<boolean>(false);
 
@@ -41,7 +41,7 @@ export class AdminQuestionnaireModalComponent {
 
   onClose() {
     if (this.isLoading()) return;
-    this.close.emit();
+    this.closed.emit();
   }
 
   copyBankAccount(account: string) {

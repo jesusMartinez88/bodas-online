@@ -32,7 +32,7 @@ export class AdminAccountModalComponent {
 
   changeEmail = output<{ email: string; currentPassword: string }>();
   changePassword = output<{ currentPassword: string; newPassword: string }>();
-  close = output<void>();
+  closed = output<void>();
 
   // Form states
   newEmail = signal<string>('');
@@ -65,7 +65,15 @@ export class AdminAccountModalComponent {
 
   onClose() {
     if (this.isSaving()) return;
-    this.close.emit();
+    this.closed.emit();
+  }
+
+  onBackdropClick(event: MouseEvent) {
+    // Solo cierra si el click fue directamente sobre el backdrop,
+    // no cuando se propaga desde la modal-card.
+    if (event.target === event.currentTarget) {
+      this.onClose();
+    }
   }
 
   resetForms() {

@@ -380,86 +380,6 @@
                       <circle cx="12" cy="19" r="1.2" fill="currentColor"/>
                     </svg>
                   </button>
-
-                  @if (isMenuOpen(user.id)) {
-                    <ul class="actions-menu" role="menu" [attr.aria-label]="'Acciones de ' + user.username">
-                      <!-- Cuestionario -->
-                      <li role="none">
-                        <button
-                          type="button"
-                          role="menuitem"
-                          class="actions-menu__item actions-menu__item--brief"
-                          (click)="runMenuAction(user, 'brief')"
-                          [disabled]="user.isProtected"
-                          [attr.aria-disabled]="user.isProtected"
-                          [title]="user.isProtected ? 'El admin principal no tiene cuestionario' : 'Ver brief y cuestionario de landing'"
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="actions-menu__icon" aria-hidden="true">
-                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-                          </svg>
-                          <span>Cuestionario</span>
-                        </button>
-                      </li>
-
-                      <!-- Ver invitación pública -->
-                      <li role="none">
-                        <button
-                          type="button"
-                          role="menuitem"
-                          class="actions-menu__item actions-menu__item--view"
-                          (click)="runMenuAction(user, 'view')"
-                          [disabled]="!canOpenInvitation(user)"
-                          [attr.aria-disabled]="!canOpenInvitation(user)"
-                          [title]="invitationButtonTitle(user)"
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="actions-menu__icon" aria-hidden="true">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                            <polyline points="15 3 21 3 21 9"/>
-                            <line x1="10" y1="14" x2="21" y2="3"/>
-                          </svg>
-                          <span>Invitación</span>
-                        </button>
-                      </li>
-
-                      <!-- Editar -->
-                      <li role="none">
-                        <button
-                          type="button"
-                          role="menuitem"
-                          class="actions-menu__item actions-menu__item--edit"
-                          (click)="runMenuAction(user, 'edit')"
-                          [disabled]="user.isProtected"
-                          [attr.aria-disabled]="user.isProtected"
-                          [title]="user.isProtected ? 'El admin principal no se puede editar' : 'Editar usuario y recursos'"
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="actions-menu__icon" aria-hidden="true">
-                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                          </svg>
-                          <span>Editar</span>
-                        </button>
-                      </li>
-
-                      <!-- Eliminar -->
-                      <li role="none">
-                        <button
-                          type="button"
-                          role="menuitem"
-                          class="actions-menu__item actions-menu__item--delete"
-                          (click)="runMenuAction(user, 'delete')"
-                          [disabled]="user.isProtected"
-                          [attr.aria-disabled]="user.isProtected"
-                          [title]="user.isProtected ? 'El admin principal no se puede eliminar' : 'Eliminar usuario'"
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="actions-menu__icon" aria-hidden="true">
-                            <polyline points="3 6 5 6 21 6"/>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                          </svg>
-                          <span>Eliminar</span>
-                        </button>
-                      </li>
-                    </ul>
-                  }
                 </div>
               </td>
             </tr>
@@ -481,7 +401,7 @@
     [musicSuccess]="musicSuccess()"
     (save)="saveEdit($event)"
     (uploadMusic)="uploadMusic($event)"
-    (close)="closeEditDialog()"
+    (closed)="closeEditDialog()"
   />
 }
 
@@ -491,7 +411,7 @@
     [isDeleting]="isDeleting()"
     [actionError]="actionError()"
     (confirm)="confirmDelete()"
-    (close)="closeDeleteConfirm()"
+    (closed)="closeDeleteConfirm()"
   />
 }
 
@@ -501,7 +421,7 @@
     [questionnaire]="questionnaire()"
     [isLoading]="questionnaireLoading()"
     [error]="questionnaireError()"
-    (close)="closeQuestionnaire()"
+    (closed)="closeQuestionnaire()"
   />
 }
 
@@ -514,7 +434,7 @@
   [passwordSuccess]="passwordSuccess()"
   (changeEmail)="changeAdminEmail($event)"
   (changePassword)="changeAdminPassword($event)"
-  (close)="closeAccountDialog()"
+  (closed)="closeAccountDialog()"
 />
 
 @if (exitConfirmService.showExitConfirm()) {
@@ -525,3 +445,89 @@
 <footer class="admin-footer" role="contentinfo">
   <span>© 2026 Admin Dashboard · BodasOnline {{ appVersion }}</span>
 </footer>
+
+<!-- Menú flotante de acciones: vive fuera de .table-wrapper y de la tabla
+     para que pueda salirse de cualquier overflow (especialmente cuando se
+     abre en la última fila). Se posiciona con coordenadas del viewport. -->
+@if (menuUser(); as menuTarget) {
+  <ul
+    class="actions-menu"
+    role="menu"
+    [attr.aria-label]="'Acciones de ' + menuTarget.username"
+    [style.top.px]="menuPosition()?.top ?? -9999"
+    [style.left.px]="menuPosition()?.left ?? -9999"
+    [style.visibility]="menuPosition() ? 'visible' : 'hidden'"
+  >
+    <li role="none">
+      <button
+        type="button"
+        role="menuitem"
+        class="actions-menu__item actions-menu__item--brief"
+        (click)="runMenuAction(menuTarget, 'brief')"
+        [disabled]="menuTarget.isProtected"
+        [attr.aria-disabled]="menuTarget.isProtected"
+        [title]="menuTarget.isProtected ? 'El admin principal no tiene cuestionario' : 'Ver brief y cuestionario de landing'"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="actions-menu__icon" aria-hidden="true">
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+          <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+        </svg>
+        <span>Cuestionario</span>
+      </button>
+    </li>
+
+    <li role="none">
+      <button
+        type="button"
+        role="menuitem"
+        class="actions-menu__item actions-menu__item--view"
+        (click)="runMenuAction(menuTarget, 'view')"
+        [disabled]="!canOpenInvitation(menuTarget)"
+        [attr.aria-disabled]="!canOpenInvitation(menuTarget)"
+        [title]="invitationButtonTitle(menuTarget)"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="actions-menu__icon" aria-hidden="true">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+        <span>Invitación</span>
+      </button>
+    </li>
+
+    <li role="none">
+      <button
+        type="button"
+        role="menuitem"
+        class="actions-menu__item actions-menu__item--edit"
+        (click)="runMenuAction(menuTarget, 'edit')"
+        [disabled]="menuTarget.isProtected"
+        [attr.aria-disabled]="menuTarget.isProtected"
+        [title]="menuTarget.isProtected ? 'El admin principal no se puede editar' : 'Editar usuario y recursos'"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="actions-menu__icon" aria-hidden="true">
+          <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+        </svg>
+        <span>Editar</span>
+      </button>
+    </li>
+
+    <li role="none">
+      <button
+        type="button"
+        role="menuitem"
+        class="actions-menu__item actions-menu__item--delete"
+        (click)="runMenuAction(menuTarget, 'delete')"
+        [disabled]="menuTarget.isProtected"
+        [attr.aria-disabled]="menuTarget.isProtected"
+        [title]="menuTarget.isProtected ? 'El admin principal no se puede eliminar' : 'Eliminar usuario'"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="actions-menu__icon" aria-hidden="true">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+        <span>Eliminar</span>
+      </button>
+    </li>
+  </ul>
+}
