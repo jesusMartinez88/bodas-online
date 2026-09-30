@@ -1,4 +1,4 @@
-# Configuración PWA - Boda Judith & Jesús
+# Configuración PWA - Bodas Online
 
 ## ✅ Implementado
 
