@@ -3,7 +3,7 @@
   <p class="gallery-subtitle">Un recorrido por nuestra historia de amor</p>
 
   <div class="story-timeline">
-    @for (photo of photos; track photo.id; let i = $index) {
+    @for (photo of photos(); track photo.id; let i = $index) {
       <div class="story-item" [class.reverse]="i % 2 !== 0" data-aos="fade-up">
         <div
           class="story-image"
@@ -36,15 +36,15 @@
   <div class="infinite-slider-container">
     <div class="infinite-slider-track" #sliderTrack>
       <!-- First set of images -->
-      @for (img of visibleSliderImages(); track img) {
+      @for (img of sliderImages(); track img) {
         <div class="slider-item">
-          <img [src]="img" alt="Boda Judith y Jesús" loading="lazy" />
+          <img [src]="img" alt="Boda {{ partner1Name() }} y {{ partner2Name() }}" loading="lazy" />
         </div>
       }
       <!-- Duplicated set for seamless loop -->
-      @for (img of visibleSliderImages(); track img + 'dup') {
+      @for (img of sliderImages(); track img + 'dup') {
         <div class="slider-item">
-          <img [src]="img" alt="Boda Judith y Jesús" loading="lazy" />
+          <img [src]="img" alt="Boda {{ partner1Name() }} y {{ partner2Name() }}" loading="lazy" />
         </div>
       }
     </div>

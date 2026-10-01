@@ -1,9 +1,16 @@
 <div class="app-container">
-  <app-hero [coverUrl]="coverUrl()" />
+  <app-hero
+    [coverUrl]="coverUrl()"
+    [partner1Name]="partner1Name()"
+    [partner2Name]="partner2Name()"
+  />
 
   <section id="gallery" class="section bg-light">
-    <app-gallery />
-    <!-- <app-gallery [galleryUrls]="galleryUrls()" /> -->
+    <app-gallery
+      [user]="userSlug()"
+      [partner1Name]="partner1Name()"
+      [partner2Name]="partner2Name()"
+    />
   </section>
 
   <section id="timeline" class="section">
@@ -20,11 +27,23 @@
     </div>
   </section>
 
-  <app-contact />
-  <app-gifts />
-  <app-calendar />
+  <app-contact
+    [partner1Name]="partner1Name()"
+    [partner2Name]="partner2Name()"
+  />
+  <app-gifts
+    [partner1Name]="partner1Name()"
+    [partner2Name]="partner2Name()"
+  />
+  <app-calendar
+    [partner1Name]="partner1Name()"
+    [partner2Name]="partner2Name()"
+  />
   <app-invitation-footer />
   <app-music-player
-    user="helena-juan"
-    song="background-music.mp3" />
+    [user]="userSlug()"
+    song="background-music.mp3"
+    [partner1Name]="partner1Name()"
+    [partner2Name]="partner2Name()"
+  />
 </div>

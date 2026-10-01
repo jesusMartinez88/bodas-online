@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 @Component({
   selector: 'app-calendar',
@@ -8,8 +8,11 @@ import { Component } from '@angular/core';
   styleUrl: './calendar.component.css',
 })
 export class CalendarComponent {
+  readonly partner1Name = input<string>('Judith');
+  readonly partner2Name = input<string>('Jesús');
+
   addToGoogleCalendar() {
-    const title = encodeURIComponent('Boda de Judith & Jesús 💍');
+    const title = encodeURIComponent(`Boda de ${this.partner1Name()} & ${this.partner2Name()} 💍`);
     const details = encodeURIComponent('¡Nos encantaría que nos acompañaras en nuestro gran día!');
     const location = encodeURIComponent('Pericon Azahar, Granada, España');
     const dates = '20260711T160000Z/20260712T020000Z';
@@ -21,11 +24,11 @@ export class CalendarComponent {
   downloadIcs() {
     const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Judith y Jesus//Boda//ES
+PRODID:-//${this.partner1Name()} y ${this.partner2Name()}//Boda//ES
 BEGIN:VEVENT
 DTSTART:20260711T180000
 DTEND:20260712T040000
-SUMMARY:Boda de Judith & Jesús 💍
+SUMMARY:Boda de ${this.partner1Name()} & ${this.partner2Name()} 💍
 DESCRIPTION:¡Nos encantaría que nos acompañaras en nuestro gran día!
 LOCATION:Pericon Azahar, Granada, España
 END:VEVENT
@@ -35,7 +38,7 @@ END:VCALENDAR`;
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'boda-judith-jesus.ics');
+    link.setAttribute('download', `boda-${this.partner1Name().toLowerCase()}-${this.partner2Name().toLowerCase()}.ics`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

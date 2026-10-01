@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, OnInit, signal } from '@angular/core';
 import AOS from 'aos';
 import { HeroComponent } from '../../hero/hero.component';
 import { GalleryComponent } from '../../gallery/gallery.component';
@@ -29,7 +29,16 @@ import { InvitationFooterComponent } from '../../../shared/components/invitation
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class JudithJesusComponent implements OnInit {
-  readonly coverUrl = signal('assets/judith-jesus/covery/hero.jpeg');
+  // Slug del usuario (identificador de la boda en el sistema y en la URL)
+  readonly userSlug = signal<string>('judith-jesus');
+
+  // Nombres de la pareja (dinámicos: cualquier boda los puede reutilizar)
+  readonly partner1Name = signal<string>('Judith');
+  readonly partner2Name = signal<string>('Jesús');
+
+   coverUrl = computed(() => {
+    return `assets/${this.userSlug()}/covery/hero.jpeg`;
+  });
 
   async ngOnInit() {
     AOS.init({

@@ -6,6 +6,7 @@ import {
   ElementRef,
   signal,
   viewChild,
+  input,
 } from '@angular/core';
 import { gsap } from 'gsap';
 
@@ -24,6 +25,8 @@ interface TimeRemaining {
   styleUrl: './countdown.component.css',
 })
 export class CountdownComponent implements OnInit, OnDestroy, AfterViewInit {
+  readonly partner1Name = input<string>('Judith');
+  readonly partner2Name = input<string>('Jesús');
   readonly countdownContainer = viewChild.required<ElementRef>('countdownContainer');
   readonly countdownHeader = viewChild.required<ElementRef>('countdownHeader');
   readonly countdownGrid = viewChild.required<ElementRef>('countdownGrid');

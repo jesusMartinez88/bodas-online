@@ -6,7 +6,7 @@
     </div>
 
     <div class="contacts-grid">
-      @for (contact of contacts; track contact.name) {
+      @for (contact of contacts(); track contact.name) {
         <div class="contact-card" data-aos="zoom-in">
           <div class="contact-icon-wrapper">
             <svg

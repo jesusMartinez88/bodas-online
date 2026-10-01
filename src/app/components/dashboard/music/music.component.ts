@@ -9,6 +9,7 @@ import {
   AfterViewInit,
   ElementRef,
   viewChild,
+  input,
 } from '@angular/core';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -63,6 +64,10 @@ export class MusicComponent implements OnInit, OnDestroy, AfterViewInit {
   private destroy$ = new Subject<void>();
 
   readonly keepAliveAudio = viewChild.required<ElementRef<HTMLAudioElement>>('keepAliveAudio');
+
+  // Slug del usuario actual (su tenant). Se usa para personalizar la
+  // metadata de MediaSession (album) y otros lugares donde se identifica al usuario.
+  readonly slug = input<string>('judith-jesus');
 
   // Signals para el estado de la UI
   songs = this.musicService.songs;
@@ -262,7 +267,7 @@ export class MusicComponent implements OnInit, OnDestroy, AfterViewInit {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: song.title,
         artist: song.artist,
-        album: 'Boda Judith & Jesús',
+        album: this.slug(),
         artwork: [
           {
             src: `https://img.youtube.com/vi/${song.youtubeId}/hqdefault.jpg`,

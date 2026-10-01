@@ -14,6 +14,8 @@ gsap.registerPlugin(ScrollTrigger);
 })
 export class HeroComponent implements AfterViewInit, OnDestroy {
   readonly coverUrl = input<string | null>(null);
+  readonly partner1Name = input<string>('Judith');
+  readonly partner2Name = input<string>('Jesús');
   readonly heroContent = viewChild.required<ElementRef>('heroContent');
   readonly heroTitle = viewChild.required<ElementRef>('heroTitle');
   readonly heroSubtitle = viewChild.required<ElementRef>('heroSubtitle');

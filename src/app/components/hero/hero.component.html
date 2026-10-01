@@ -9,12 +9,15 @@
 
   <div class="hero-content" #heroContent>
     <div class="hero-text">
-      <h1 class="hero-title" #heroTitle>Judith & Jesús</h1>
+      <h1 class="hero-title" #heroTitle>{{ partner1Name() }} & {{ partner2Name() }}</h1>
       <p class="hero-subtitle" #heroSubtitle>Nos casamos el 11 de Julio de 2026</p>
       <p class="hero-location" #heroLocation>En Blanca (Murcia)</p>
 
       <div class="hero-countdown" #countdownWrapper>
-        <app-countdown />
+        <app-countdown
+          [partner1Name]="partner1Name()"
+          [partner2Name]="partner2Name()"
+        />
       </div>
 
       <a href="#rsvp" class="hero-cta" #heroCta>Confirma tu asistencia</a>

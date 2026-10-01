@@ -14,6 +14,8 @@ export class MusicPlayerComponent {
   readonly user = input.required<string>();
   readonly song = input.required<string>();
   readonly source = input<string | null>(null);
+  readonly partner1Name = input<string>('Judith');
+  readonly partner2Name = input<string>('Jesús');
 
   // Exponer signals del servicio para el template
   readonly isPlaying = this.audioService.isPlaying;
