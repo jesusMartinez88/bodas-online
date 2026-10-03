@@ -7,7 +7,7 @@
 
   <section id="gallery" class="section bg-light">
     <app-gallery
-      [user]="userSlug()"
+      [user]="slug()"
       [partner1Name]="partner1Name()"
       [partner2Name]="partner2Name()"
     />
@@ -41,8 +41,8 @@
   />
   <app-invitation-footer />
   <app-music-player
-    [user]="userSlug()"
-    song="background-music.mp3"
+    [user]="slug()"
+    [song]="song()"
     [partner1Name]="partner1Name()"
     [partner2Name]="partner2Name()"
   />
