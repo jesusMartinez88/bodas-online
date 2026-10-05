@@ -440,13 +440,61 @@ export interface PaymentConfig {
  * Respuesta de `POST /api/payments/create-intent`. El frontend usa
  * `clientSecret` para inicializar el Payment Element de Stripe y
  * `paymentIntentId` para correlación/logs.
+ *
+ * Tras añadir el soporte de códigos de descuento, el backend puede
+ * responder con `valid: false` cuando el usuario mandó un código
+ * que no es válido (es un input esperado, NO un error de transporte).
+ * En ese caso faltan `clientSecret` y `paymentIntentId` y el caller
+ * debe mostrar el `message`.
  */
 export interface PaymentIntentResponse {
-  clientSecret: string;
-  paymentIntentId: string;
-  amount: number;
-  currency: string;
-  reused: boolean;
+  clientSecret?: string;
+  paymentIntentId?: string;
+  amount?: number;
+  currency?: string;
+  reused?: boolean;
+  valid?: boolean;
+  reason?: 'not_found' | 'inactive' | 'expired' | 'empty';
+  message?: string;
+  originalAmountCents?: number;
+  discount?: AppliedDiscount | null;
+}
+
+/**
+ * Subset de campos del descuento aplicado que el frontend renderiza
+ * junto al resumen de pago (precio original tachado, ahorro, final).
+ *
+ * Todos los importes en CÉNTIMOS para evitar redondeos; la UI los
+ * formatea a euros en su locale (`es-ES`).
+ */
+export interface AppliedDiscount {
+  code: string;
+  percent: number;
+  originalAmountCents: number;
+  savingsCents: number;
+  finalAmountCents: number;
+  description?: string | null;
+  expiresAt?: string | null;
+}
+
+/**
+ * Respuesta de `POST /api/payments/validate-discount`. Devuelve
+ * siempre 200 (un cupón inválido NO es un error). El caller distingue
+ * con la propiedad `valid`.
+ */
+export interface DiscountValidationResponse {
+  success: true;
+  valid: boolean;
+  reason?: 'not_found' | 'inactive' | 'expired' | 'empty';
+  message?: string;
+  code?: string;
+  percent?: number;
+  description?: string | null;
+  expiresAt?: string | null;
+  currency?: string;
+  originalAmountCents?: number;
+  savingsCents?: number;
+  finalAmountCents?: number;
 }
 
 /**
@@ -494,3 +542,51 @@ export interface AiGenerateResponse {
 export interface ConfirmationCodeQuery {
   code: string;
 }
+
+/**
+ * Cupón de descuento devuelto por `GET /api/admin/discount-codes`.
+ *
+ * Los códigos son **globales** (no se vinculan a un usuario concreto)
+ * y los gestiona únicamente el admin desde el panel.
+ *
+ *  - `active`: el backend lo serializa como `0 | 1` por la convención
+ *    de SQLite. En la UI lo convertimos a `boolean` para que el
+ *    template use `@if (code.active)` sin sorpresas.
+ *  - `expiresAt`: ISO datetime o `null` si no expira. El backend
+ *    compara contra `Date.now()` en cada validación.
+ */
+export interface DiscountCode {
+  id: number;
+  code: string;
+  percent: number;
+  active: 0 | 1 | boolean;
+  description: string | null;
+  expiresAt: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/**
+ * Payload para `POST /api/admin/discount-codes`. El backend normaliza
+ * `code` (trim + uppercase) y aplica la regex `[A-Z0-9_-]{2,40}`;
+ * el frontend hace las mismas validaciones para no enviar formularios
+ * inválidos que sabemos que van a fallar.
+ */
+export interface DiscountCodeCreateRequest {
+  code: string;
+  percent: number;
+  description?: string | null;
+  expiresAt?: string | null;
+}
+
+/**
+ * Payload para `PATCH /api/admin/discount-codes/:id`. Todos los
+ * campos son opcionales — solo se aplican los enviados. Se usa
+ * para activar/desactivar un código sin re-crearlo.
+ */
+export type DiscountCodePatchRequest = Partial<{
+  percent: number;
+  active: boolean;
+  description: string | null;
+  expiresAt: string | null;
+}>;

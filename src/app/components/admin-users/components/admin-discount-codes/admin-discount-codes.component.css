@@ -1,0 +1,652 @@
+:host {
+  display: block;
+  /* Las variables --admin-* las define :host de admin-users.
+     CSS custom properties cascadean, así que las reusamos aquí. */
+}
+
+/* ── Sección ───────────────────────────────────────────────────────── */
+
+.discount-section {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  padding: 1.5rem 1.5rem 1.25rem;
+  box-shadow: var(--admin-shadow);
+  margin-bottom: 1.5rem;
+}
+
+.discount-section__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--admin-border-subtle);
+}
+
+.discount-section__heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.discount-section__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
+}
+
+.discount-section__icon .svg-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.discount-section__title {
+  margin: 0 0 0.25rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.discount-section__subtitle {
+  margin: 0;
+  color: var(--admin-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  max-width: 64ch;
+}
+
+.discount-section__stats {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.discount-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: var(--admin-border-subtle);
+  color: var(--admin-text-muted);
+}
+
+.discount-stat strong {
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.discount-stat--active {
+  background: var(--admin-success-bg);
+  color: var(--admin-success);
+}
+
+.discount-stat--active strong {
+  color: var(--admin-success);
+}
+
+.discount-stat__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--admin-success);
+}
+
+/* ── Formulario de alta ─────────────────────────────────────────────── */
+
+.discount-create-form {
+  margin-bottom: 1.25rem;
+}
+
+.discount-create-form__grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 1.6fr 1.4fr auto;
+  gap: 0.85rem;
+  align-items: end;
+}
+
+.form-group--action {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+@media (max-width: 880px) {
+  .discount-create-form__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .form-group--action {
+    grid-column: 1 / -1;
+    justify-content: stretch;
+  }
+  .form-group--action .btn {
+    width: 100%;
+  }
+}
+
+/* Reusamos estilos `.form-label` / `.form-input` definidos por el
+   admin-users.component.css en el scope global. Si en el futuro se
+   aíslan (encapsulación), habría que redefinirlos aquí. */
+.form-label { display: block; }
+.form-input {
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: #ffffff;
+  color: var(--admin-text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px rgba(190, 24, 93, 0.12);
+}
+
+.form-input:disabled {
+  background: var(--admin-border-subtle);
+  color: var(--admin-text-muted);
+  cursor: not-allowed;
+}
+
+.form-error {
+  margin: 0.6rem 0 0;
+  color: var(--admin-danger);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* ── Alertas ───────────────────────────────────────────────────────── */
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  margin-bottom: 0.85rem;
+}
+
+.alert-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.alert--error {
+  background: #fef2f2;
+  color: var(--admin-danger);
+  border: 1px solid #fecaca;
+}
+
+.alert--success {
+  background: var(--admin-success-bg);
+  color: var(--admin-success);
+  border: 1px solid #a7f3d0;
+}
+
+/* ── Botones ───────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--admin-primary);
+  color: #ffffff;
+}
+
+.btn--primary:not(:disabled):hover {
+  background: var(--admin-primary-hover);
+}
+
+.btn--secondary {
+  background: #ffffff;
+  color: var(--admin-text);
+  border-color: var(--admin-border);
+}
+
+.btn--secondary:not(:disabled):hover {
+  background: var(--admin-border-subtle);
+}
+
+.btn--compact {
+  padding: 0.5rem 0.85rem;
+  font-size: 0.85rem;
+}
+
+.btn-icon-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  border: 1px solid var(--admin-border);
+  background: #ffffff;
+  color: var(--admin-text);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-icon-action:not(:disabled):hover {
+  background: var(--admin-border-subtle);
+  border-color: #cbd5e1;
+}
+
+.btn-icon-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-icon-action--danger:not(:disabled):hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: var(--admin-danger);
+}
+
+.svg-icon-sm {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.svg-icon-sm.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Tabla ─────────────────────────────────────────────────────────── */
+
+.discount-table-wrapper {
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.discount-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.discount-table th,
+.discount-table td {
+  padding: 0.7rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid var(--admin-border-subtle);
+  vertical-align: middle;
+}
+
+.discount-table th {
+  background: var(--admin-bg);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--admin-text-muted);
+}
+
+.discount-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.discount-table tbody tr:hover {
+  background: var(--admin-bg);
+}
+
+.discount-table .row--inactive {
+  opacity: 0.6;
+}
+
+.th-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.th-actions .btn-icon-action + .btn-icon-action {
+  margin-left: 0.35rem;
+}
+
+.discount-code-text {
+  font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: var(--admin-primary-light);
+  color: var(--admin-primary);
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  border: 1px solid #fbcfe8;
+  display: inline-block;
+}
+
+.discount-percent {
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.discount-description {
+  color: var(--admin-text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.expired {
+  color: var(--admin-danger);
+  font-weight: 500;
+}
+
+.expired-tag {
+  margin-left: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--admin-danger);
+  font-weight: 600;
+}
+
+.muted-dash {
+  color: var(--admin-text-muted);
+  font-size: 0.85rem;
+}
+
+/* ── Toggle ────────────────────────────────────────────────────────── */
+
+.toggle {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.toggle__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
+.toggle__track {
+  display: inline-block;
+  width: 2.5rem;
+  height: 1.4rem;
+  background: #cbd5e1;
+  border-radius: 999px;
+  position: relative;
+  transition: background 0.2s ease;
+  vertical-align: middle;
+}
+
+.toggle__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1.15rem;
+  height: 1.15rem;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.toggle__input:checked + .toggle__track {
+  background: var(--admin-success);
+}
+
+.toggle__input:checked + .toggle__track .toggle__thumb {
+  transform: translateX(1.1rem);
+}
+
+.toggle__input:focus-visible + .toggle__track {
+  outline: 3px solid rgba(5, 150, 105, 0.3);
+  outline-offset: 2px;
+}
+
+.toggle__input:disabled + .toggle__track {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Estados (loading / empty / error) ─────────────────────────────── */
+
+.state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem 1.25rem;
+  gap: 0.5rem;
+  color: var(--admin-text-muted);
+}
+
+.state-card__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--admin-border-subtle);
+  color: var(--admin-text-muted);
+}
+
+.state-card--error .state-card__icon {
+  background: #fef2f2;
+  color: var(--admin-danger);
+}
+
+.state-card__title {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.state-card__desc {
+  margin: 0;
+  font-size: 0.9rem;
+  max-width: 50ch;
+}
+
+.spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--admin-border);
+  border-top-color: var(--admin-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner--xs {
+  width: 0.95rem;
+  height: 0.95rem;
+  border-width: 2px;
+}
+
+/* ── Modal de edición ──────────────────────────────────────────────── */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.25rem;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal-card--discount {
+  width: 100%;
+  max-width: 460px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: var(--admin-shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: scaleIn 0.15s ease;
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--admin-border-subtle);
+  background: var(--admin-bg);
+}
+
+.modal-header__info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.account-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.account-icon .svg-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.modal-header__eyebrow {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--admin-text-muted);
+}
+
+.modal-header__title {
+  margin: 0.1rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--admin-text-muted);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.btn-close:not(:disabled):hover {
+  background: var(--admin-border-subtle);
+  color: var(--admin-text);
+}
+
+.btn-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-close .svg-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.modal-body {
+  padding: 1.25rem 1.5rem;
+}
+
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.card-action--row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .discount-section {
+    padding: 1.1rem 1rem;
+  }
+
+  .discount-table th,
+  .discount-table td {
+    padding: 0.55rem 0.65rem;
+  }
+
+  .discount-table {
+    font-size: 0.85rem;
+  }
+}

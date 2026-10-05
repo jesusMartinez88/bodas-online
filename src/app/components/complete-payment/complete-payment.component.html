@@ -21,8 +21,67 @@
         <span class="payment-summary__label">Plan Pareja Completo</span>
         <span class="payment-summary__detail">Acceso ilimitado · pago único</span>
       </div>
-      <strong>{{ paymentAmountMajor() }} {{ paymentCurrency() }}</strong>
+      <div class="payment-summary__amount">
+        @if (appliedDiscount(); as discount) {
+          <span class="payment-summary__amount-strike">
+            {{ (discount.originalAmountCents / 100) | number:'1.2-2':'es-ES' }}
+            {{ paymentCurrency() }}
+          </span>
+          <strong>{{ paymentAmountMajor() }} {{ paymentCurrency() }}</strong>
+          <span class="payment-summary__amount-save">
+            Ahorras {{ (discount.savingsCents / 100) | number:'1.2-2':'es-ES' }}
+            {{ paymentCurrency() }} ({{ discount.percent }}%)
+          </span>
+        } @else {
+          <strong>{{ paymentAmountMajor() }} {{ paymentCurrency() }}</strong>
+        }
+      </div>
     </div>
+
+    @if (!appliedDiscount()) {
+      <form
+        class="payment-discount"
+        (ngSubmit)="applyDiscountCode()"
+        novalidate
+        aria-label="Aplicar código de descuento">
+        <label class="form-label" for="cp-discount-code">¿Tienes un código de descuento?</label>
+        <div class="payment-discount__row">
+          <input
+            id="cp-discount-code"
+            type="text"
+            class="form-input"
+            placeholder="Ej. BODAS10"
+            autocomplete="off"
+            spellcheck="false"
+            [disabled]="discountProcessing()"
+            [value]="discountCodeInput()"
+            (input)="onDiscountCodeInput($event)" />
+          <button
+            type="submit"
+            class="btn-secondary"
+            [disabled]="discountProcessing() || !discountCodeInput().trim()">
+            {{ discountProcessing() ? 'Comprobando…' : 'Aplicar' }}
+          </button>
+        </div>
+        @if (discountError(); as msg) {
+          <p class="form-error" role="alert">{{ msg }}</p>
+        }
+      </form>
+    } @else {
+      <div class="payment-discount payment-discount--applied" role="status">
+        <span>
+          Código <strong>{{ appliedDiscount()!.code }}</strong> aplicado
+          ({{ appliedDiscount()!.percent }}% de descuento).
+        </span>
+        <button
+          type="button"
+          class="btn-link"
+          (click)="clearDiscountCode()"
+          [disabled]="paymentProcessing()">
+          Quitar
+        </button>
+      </div>
+    }
 
     @if (paymentMode() === 'ready') {
       <form class="payment-form" (ngSubmit)="completePayment()" novalidate>

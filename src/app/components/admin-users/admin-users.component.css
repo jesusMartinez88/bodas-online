@@ -171,6 +171,85 @@
   flex-wrap: wrap;
 }
 
+/* Pestañas de sección (Usuarios / Códigos de descuento).
+   Nivel superior al `<filter-tabs>` interno: más grandes, con icono
+   y underline indicador en lugar de pill, para que se lea claro que
+   son navegación principal y no un filtro más. */
+.section-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--admin-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.section-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.section-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.7rem 1.1rem;
+  margin-bottom: -1px; /* solapa el border-bottom del contenedor */
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.section-tab:hover:not(.section-tab--active) {
+  color: var(--admin-text);
+}
+
+.section-tab:focus-visible {
+  outline: 3px solid rgba(190, 24, 93, 0.25);
+  outline-offset: -3px;
+  border-radius: 6px;
+}
+
+.section-tab--active {
+  color: var(--admin-primary);
+  border-bottom-color: var(--admin-primary);
+}
+
+.section-tab__icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+}
+
+.section-tab__label {
+  line-height: 1.1;
+}
+
+.section-tab__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  padding: 0.05rem 0.4rem;
+  background: var(--admin-border-subtle);
+  color: var(--admin-text-muted);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.section-tab--active .section-tab__count {
+  background: var(--admin-primary-light);
+  color: var(--admin-primary);
+}
+
 /* Pestañas de filtro */
 .filter-tabs {
   display: inline-flex;

@@ -8,6 +8,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -85,7 +86,7 @@ export async function detectImageKind(file: File): Promise<ImageKind | null> {
   templateUrl: './register.component.html',
   styleUrl: './register.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, LandingQuestionnaireComponent],
+  imports: [FormsModule, CommonModule, LandingQuestionnaireComponent],
 })
 export class RegisterComponent {
   constructor() {
@@ -142,6 +143,36 @@ export class RegisterComponent {
   >('loading');
   protected readonly paymentAmountMajor = signal<string>('59,00');
   protected readonly paymentCurrency = signal<string>('eur');
+
+  // ── Estado del código de descuento ────────────────────────────
+  /**
+   * Texto crudo del input. NO se valida automáticamente: el usuario
+   * pulsa "Aplicar" (o Enter) y entonces llamamos al backend. Eso
+   * evita llamadas extra mientras el usuario todavía está tecleando.
+   */
+  protected readonly discountCodeInput = signal<string>('');
+  /** Detalle del descuento ya validado y aplicado al PaymentIntent. */
+  protected readonly appliedDiscount = signal<
+    import('../../../types/api').AppliedDiscount | null
+  >(null);
+  /** Precio original (en céntimos) antes de aplicar el descuento. */
+  protected readonly baseAmountCents = signal<number>(0);
+  /** Mensaje de error cuando el cupón NO es válido. */
+  protected readonly discountError = signal<string | null>(null);
+  /** `true` mientras dura la llamada a `validate-discount`. */
+  protected readonly discountProcessing = signal<boolean>(false);
+
+  /**
+   * Handler `(input)` del campo de código. Usamos un método en vez de
+   * `[(ngModel)]` para mantener el control en signals sin meter
+   * `FormsModule` extra en el template.
+   */
+  protected onDiscountCodeInput(event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    this.discountCodeInput.set(target?.value ?? '');
+    // Si el usuario vuelve a escribir, limpiamos el error anterior.
+    if (this.discountError()) this.discountError.set(null);
+  }
 
   /**
    * Contenedor donde Stripe monta el Payment Element. Lo declaramos
@@ -456,12 +487,19 @@ export class RegisterComponent {
   private async initializePayment(): Promise<void> {
     this.paymentMode.set('loading');
     this.paymentError.set(null);
+    this.appliedDiscount.set(null);
+    this.discountError.set(null);
 
     try {
       const cfg = await this.paymentService.loadConfig();
 
+      // Guardamos el importe base en céntimos (lo usa la lógica del
+      // cupón para mostrar el "antes/después").
+      const baseCents = cfg.amount ?? 0;
+      this.baseAmountCents.set(baseCents);
+
       // Para mostrar el importe formateado en el summary.
-      const amount = (cfg.amount ?? 0) / 100;
+      const amount = baseCents / 100;
       this.paymentAmountMajor.set(
         amount.toLocaleString('es-ES', {
           minimumFractionDigits: 2,
@@ -475,7 +513,16 @@ export class RegisterComponent {
         return;
       }
 
-      const intent = await this.paymentService.createIntent();
+      const intent = await this.createOrReplaceIntent();
+      if (!intent || !intent.clientSecret) {
+        this.paymentMode.set('unavailable');
+        this.paymentError.set(
+          'No pudimos cargar el formulario de pago seguro. ' +
+            'Continúa en modo demo.',
+        );
+        return;
+      }
+
       const elements = await this.paymentService.createElements(
         intent.clientSecret,
       );
@@ -498,6 +545,191 @@ export class RegisterComponent {
           'Continúa en modo demo.',
       );
     }
+  }
+
+  /**
+   * Crea (o reemplaza) el PaymentIntent pasándole el código de
+   * descuento que esté actualmente aplicado. Centraliza la llamada
+   * para que cualquier cambio de cupón pase por el mismo punto.
+   *
+   * Si el backend responde con `valid:false` (cupón inválido),
+   * limpiamos el cupón aplicado y devolvemos `null` para que el
+   * caller decida qué hacer.
+   */
+  private async createOrReplaceIntent(): Promise<
+    import('../../../types/api').PaymentIntentResponse | null
+  > {
+    const applied = this.appliedDiscount();
+    const code = applied?.code ?? null;
+
+    const intent = await this.paymentService.createIntent(code);
+
+    if (intent && intent.valid === false) {
+      // El cupón que tenía aplicado el usuario ya no es válido
+      // (pudo expirar entre tanto). Limpiamos y recreamos sin él.
+      this.appliedDiscount.set(null);
+      this.discountError.set(
+        intent.message ??
+          'El código ya no es válido. Introdúcelo de nuevo o continúa sin él.',
+      );
+      this.discountCodeInput.set('');
+      const retry = await this.paymentService.createIntent(null);
+      return retry ?? null;
+    }
+
+    if (intent?.discount) {
+      this.appliedDiscount.set(intent.discount);
+      this.refreshDisplayedAmountDisplay();
+    } else {
+      this.appliedDiscount.set(null);
+      this.refreshDisplayedAmountDisplay();
+    }
+    return intent;
+  }
+
+  /**
+   * Llama al endpoint `/validate-discount`. Si es válido, lo aplica
+   * (re-creando el PaymentIntent). Si no, muestra el error inline.
+   */
+  protected async applyDiscountCode(): Promise<void> {
+    if (this.discountProcessing()) return;
+    const code = this.discountCodeInput().trim();
+    if (!code) {
+      this.discountError.set('Introduce un código antes de pulsar Aplicar.');
+      return;
+    }
+
+    this.discountProcessing.set(true);
+    this.discountError.set(null);
+    try {
+      // 1) Validamos sin tocar el intent (más barato, evita "ensuciar"
+      //    la DB con intents rechazados si el código era malo).
+      const validation = await this.paymentService.validateDiscountCode(code);
+      if (!validation || validation.valid !== true) {
+        this.discountError.set(
+          validation?.message ??
+            'El código no es válido, está inactivo o ha expirado.',
+        );
+        return;
+      }
+
+      // 2) Aplicamos: guardamos el descuento y recreamos el intent
+      //    con el código. El importe que verá Stripe será el `final`.
+      this.appliedDiscount.set({
+        code: validation.code ?? code.toUpperCase(),
+        percent: validation.percent ?? 0,
+        originalAmountCents:
+          validation.originalAmountCents ?? this.baseAmountCents(),
+        savingsCents: validation.savingsCents ?? 0,
+        finalAmountCents: validation.finalAmountCents ?? this.baseAmountCents(),
+        description: validation.description ?? null,
+        expiresAt: validation.expiresAt ?? null,
+      });
+
+      // Re-creamos el PaymentIntent. Si Stripe ya está montado,
+      // necesitamos desmontar primero para poder pasar un nuevo
+      // clientSecret al `Elements`.
+      this.paymentService.destroyElements();
+      this.mountedPaymentElement = null;
+      this.paymentMode.set('loading');
+
+      const intent = await this.paymentService.createIntent(
+        this.appliedDiscount()?.code ?? null,
+      );
+
+      if (intent?.valid === false) {
+        this.appliedDiscount.set(null);
+        this.discountError.set(
+          intent.message ?? 'El código no es válido.',
+        );
+        this.discountCodeInput.set('');
+        this.paymentMode.set('ready');
+        // Restauramos Elements sin descuento
+        const retry = await this.paymentService.createIntent(null);
+        if (retry && retry.clientSecret) {
+          const elements = await this.paymentService.createElements(
+            retry.clientSecret,
+          );
+          if (elements) this.paymentMode.set('ready');
+        }
+        return;
+      }
+
+      if (intent?.discount) {
+        // El backend manda el descuento re-calculado por si acaso.
+        this.appliedDiscount.set(intent.discount);
+      }
+
+      const elements = intent?.clientSecret
+        ? await this.paymentService.createElements(intent.clientSecret)
+        : null;
+      if (!elements) {
+        this.paymentMode.set('unavailable');
+        this.paymentError.set(
+          'No pudimos recargar el formulario de pago. Inténtalo de nuevo.',
+        );
+        return;
+      }
+      this.paymentMode.set('ready');
+      this.refreshDisplayedAmountDisplay();
+    } catch (err) {
+      console.error('[register] applyDiscountCode error:', err);
+      this.discountError.set(
+        'No pudimos comprobar el código. Revisa tu conexión e inténtalo de nuevo.',
+      );
+    } finally {
+      this.discountProcessing.set(false);
+    }
+  }
+
+  /**
+   * Quita el cupón aplicado: limpia el input, el descuento aplicado
+   * y recrea el PaymentIntent al precio original.
+   */
+  protected async clearDiscountCode(): Promise<void> {
+    if (!this.appliedDiscount() && !this.discountCodeInput()) return;
+    this.discountCodeInput.set('');
+    this.appliedDiscount.set(null);
+    this.discountError.set(null);
+    this.paymentMode.set('loading');
+    try {
+      this.paymentService.destroyElements();
+      this.mountedPaymentElement = null;
+      const intent = await this.paymentService.createIntent(null);
+      if (intent?.clientSecret) {
+        const elements = await this.paymentService.createElements(
+          intent.clientSecret,
+        );
+        if (!elements) {
+          this.paymentMode.set('unavailable');
+          this.paymentError.set(
+            'No pudimos recargar el formulario de pago. Inténtalo de nuevo.',
+          );
+          return;
+        }
+        this.paymentMode.set('ready');
+      }
+      this.refreshDisplayedAmountDisplay();
+    } catch (err) {
+      console.error('[register] clearDiscountCode error:', err);
+      this.paymentMode.set('unavailable');
+    }
+  }
+
+  /**
+   * Actualiza `paymentAmountMajor` para reflejar el precio con o sin
+   * descuento (lo que el usuario VE en el resumen). NO toca Stripe:
+   * Stripe ya tiene el precio correcto en el PaymentIntent.
+   */
+  private refreshDisplayedAmountDisplay(): void {
+    const applied = this.appliedDiscount();
+    const finalCents = applied?.finalAmountCents ?? this.baseAmountCents();
+    this.paymentAmountMajor.set(
+      (finalCents / 100).toLocaleString('es-ES', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    );
   }
 
   /**

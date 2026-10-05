@@ -32,8 +32,17 @@ import {
 import { AdminQuestionnaireModalComponent } from './components/admin-questionnaire-modal/admin-questionnaire-modal.component';
 import { AdminAccountModalComponent } from './components/admin-account-modal/admin-account-modal.component';
 import { AdminDeleteModalComponent } from './components/admin-delete-modal/admin-delete-modal.component';
+import { AdminDiscountCodesComponent } from './components/admin-discount-codes/admin-discount-codes.component';
 
 export type UserStatusFilter = 'all' | 'paid' | 'pending' | 'has_invitation';
+
+/**
+ * Pestaña superior del panel admin. Permite alternar entre la gestión
+ * de parejas (lista, filtros, tabla) y la gestión de códigos de
+ * descuento. Las KPIs (KPIs arriba) se muestran siempre porque son
+ * métricas globales de la plataforma, no de una sección concreta.
+ */
+export type AdminSection = 'users' | 'discounts';
 
 @Component({
   selector: 'app-admin-users',
@@ -47,6 +56,7 @@ export type UserStatusFilter = 'all' | 'paid' | 'pending' | 'has_invitation';
     AdminQuestionnaireModalComponent,
     AdminAccountModalComponent,
     AdminDeleteModalComponent,
+    AdminDiscountCodesComponent,
   ],
   templateUrl: './admin-users.component.html',
   styleUrl: './admin-users.component.css',
@@ -69,6 +79,13 @@ export class AdminUsersComponent implements OnInit {
   // Filtros y búsqueda
   searchQuery = signal<string>('');
   statusFilter = signal<UserStatusFilter>('all');
+
+  /**
+   * Sección visible del panel. Por defecto `users` para mantener el
+   * flujo de siempre; el usuario puede cambiar a `discounts` para ir al
+   * CRUD de cupones sin perder el estado de los filtros al volver.
+   */
+  activeSection = signal<AdminSection>('users');
 
   // Estado del modal de edición
   editingUser = signal<AdminUser | null>(null);
@@ -183,6 +200,10 @@ export class AdminUsersComponent implements OnInit {
 
   setStatusFilter(filter: UserStatusFilter) {
     this.statusFilter.set(filter);
+  }
+
+  setSection(section: AdminSection) {
+    this.activeSection.set(section);
   }
 
   // --- Modal Edición ---

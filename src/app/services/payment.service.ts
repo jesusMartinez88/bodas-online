@@ -9,6 +9,7 @@ import {
   PaymentIntentResponse,
   PaymentsListResponse,
   CheckoutSessionResponse,
+  DiscountValidationResponse,
 } from '../../types/api';
 
 /**
@@ -75,12 +76,40 @@ export class PaymentService {
    * Pide al backend que cree un PaymentIntent. El backend ya
    * adjunta el `userId` desde el JWT; el frontend solo necesita
    * estar autenticado.
+   *
+   * Si se pasa un `discountCode` (no vacío), el backend lo valida
+   * y aplica el descuento al `amount` que va a Stripe. La respuesta
+   * incluye `originalAmountCents`, `discount.savingsCents` y
+   * `discount.finalAmountCents` para que la UI pueda pintar el
+   * precio original + tachado.
    */
-  async createIntent(): Promise<PaymentIntentResponse> {
+  async createIntent(discountCode?: string | null): Promise<PaymentIntentResponse> {
     return firstValueFrom(
       this.http.post<PaymentIntentResponse>(
         `${this.baseUrl}/api/payments/create-intent`,
-        {},
+        { discountCode: discountCode?.trim() || undefined },
+      ),
+    );
+  }
+
+  /**
+   * Valida un código de descuento SIN crear un PaymentIntent.
+   * Útil para mostrar el ahorro al usuario antes de que confirme el
+   * pago (UX tipo "tienes un cupón? introdúcelo y te decimos cuánto
+   * te ahorras").
+   *
+   * El backend siempre devuelve 200 (un cupón inválido NO es un
+   * error de transporte); la promesa solo rechaza si la red falla
+   * o el backend devuelve 5xx.
+   */
+  async validateDiscountCode(
+    code: string,
+  ): Promise<DiscountValidationResponse | null> {
+    if (!code || !code.trim()) return null;
+    return firstValueFrom(
+      this.http.post<DiscountValidationResponse>(
+        `${this.baseUrl}/api/payments/validate-discount`,
+        { code: code.trim() },
       ),
     );
   }

@@ -54,6 +54,54 @@
     [visitStats]="visitStats()"
   />
 
+  <!-- Pestañas de sección: Usuarios / Códigos de descuento -->
+  <nav class="section-tabs" role="tablist" aria-label="Sección del panel de administración">
+    <button
+      type="button"
+      role="tab"
+      class="section-tab"
+      id="section-tab-users"
+      [class.section-tab--active]="activeSection() === 'users'"
+      [attr.aria-selected]="activeSection() === 'users'"
+      aria-controls="section-panel-users"
+      (click)="setSection('users')"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-tab__icon" aria-hidden="true">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      <span class="section-tab__label">Usuarios</span>
+      <span class="section-tab__count">{{ totalCount() }}</span>
+    </button>
+
+    <button
+      type="button"
+      role="tab"
+      class="section-tab"
+      id="section-tab-discounts"
+      [class.section-tab--active]="activeSection() === 'discounts'"
+      [attr.aria-selected]="activeSection() === 'discounts'"
+      aria-controls="section-panel-discounts"
+      (click)="setSection('discounts')"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-tab__icon" aria-hidden="true">
+        <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+        <path d="M13 5v2"/>
+        <path d="M13 17v2"/>
+        <path d="M13 11v2"/>
+      </svg>
+      <span class="section-tab__label">Códigos de descuento</span>
+    </button>
+  </nav>
+
+  @if (activeSection() === 'users') {
+    <div
+      id="section-panel-users"
+      role="tabpanel"
+      aria-labelledby="section-tab-users"
+    >
   <!-- Barra de herramientas: Búsqueda + Filtros por pestañas/chips + Recargar -->
   <div class="admin-toolbar">
     <!-- Pestañas de estado -->
@@ -386,6 +434,18 @@
           }
         </tbody>
       </table>
+    </div>
+  }
+    </div>
+  }
+
+  @if (activeSection() === 'discounts') {
+    <div
+      id="section-panel-discounts"
+      role="tabpanel"
+      aria-labelledby="section-tab-discounts"
+    >
+      <app-admin-discount-codes />
     </div>
   }
 </section>

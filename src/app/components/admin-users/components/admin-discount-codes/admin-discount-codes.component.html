@@ -1,0 +1,416 @@
+<section class="discount-section" aria-labelledby="discount-section-title">
+  <header class="discount-section__header">
+    <div class="discount-section__heading">
+      <div class="discount-section__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon">
+          <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+          <path d="M13 5v2"/>
+          <path d="M13 17v2"/>
+          <path d="M13 11v2"/>
+        </svg>
+      </div>
+      <div>
+        <h2 id="discount-section-title" class="discount-section__title">Códigos de descuento</h2>
+        <p class="discount-section__subtitle">
+          Gestiona los cupones que se aplican automáticamente en el checkout
+          del Plan Pareja Completo. Los códigos son globales: cualquier cliente
+          puede usarlos introduciendo el texto en su pantalla de pago.
+        </p>
+      </div>
+    </div>
+
+    <div class="discount-section__stats">
+      <span class="discount-stat discount-stat--active">
+        <span class="discount-stat__dot" aria-hidden="true"></span>
+        <strong>{{ activeCount() }}</strong>
+        <span>activos</span>
+      </span>
+      <span class="discount-stat discount-stat--muted">
+        <strong>{{ inactiveCount() }}</strong>
+        <span>inactivos</span>
+      </span>
+      <button
+        type="button"
+        class="btn-icon-action"
+        (click)="loadCodes()"
+        [disabled]="isLoading()"
+        title="Recargar"
+        aria-label="Recargar códigos de descuento"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-sm" [class.spin]="isLoading()">
+          <path d="M21 12a9 9 0 1 1-3-6.7L21 8"/>
+          <path d="M21 3v5h-5"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Formulario de alta -->
+  <form
+    class="discount-create-form"
+    (ngSubmit)="submitCreate()"
+    novalidate
+    aria-label="Crear nuevo código de descuento"
+  >
+    @if (actionError(); as msg) {
+      <div class="alert alert--error" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="alert-icon">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>{{ msg }}</span>
+      </div>
+    }
+    @if (createSuccess(); as msg) {
+      <div class="alert alert--success" role="status">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="alert-icon">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        <span>{{ msg }}</span>
+      </div>
+    }
+
+    <div class="discount-create-form__grid">
+      <div class="form-group">
+        <label for="dc-new-code" class="form-label">Código</label>
+        <input
+          id="dc-new-code"
+          type="text"
+          class="form-input"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="Ej. BODAS10"
+          maxlength="40"
+          [value]="createForm().code"
+          (input)="updateCreateField('code', $any($event.target).value)"
+          [disabled]="isCreating()"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="dc-new-percent" class="form-label">% descuento</label>
+        <input
+          id="dc-new-percent"
+          type="number"
+          class="form-input"
+          inputmode="numeric"
+          min="1"
+          max="100"
+          step="1"
+          placeholder="10"
+          [value]="createForm().percent"
+          (input)="updateCreateField('percent', +$any($event.target).value)"
+          [disabled]="isCreating()"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="dc-new-description" class="form-label">Descripción (opcional)</label>
+        <input
+          id="dc-new-description"
+          type="text"
+          class="form-input"
+          autocomplete="off"
+          placeholder="Ej. Lanzamiento 2026"
+          maxlength="120"
+          [value]="createForm().description"
+          (input)="updateCreateField('description', $any($event.target).value)"
+          [disabled]="isCreating()"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="dc-new-expires" class="form-label">Caduca (opcional)</label>
+        <input
+          id="dc-new-expires"
+          type="datetime-local"
+          class="form-input"
+          [value]="createForm().expiresAt"
+          (input)="updateCreateField('expiresAt', $any($event.target).value)"
+          [disabled]="isCreating()"
+        />
+      </div>
+
+      <div class="form-group form-group--action">
+        <button
+          type="submit"
+          class="btn btn--primary btn--compact"
+          [disabled]="isCreating()"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-sm" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          <span>{{ isCreating() ? 'Creando…' : 'Crear código' }}</span>
+        </button>
+      </div>
+    </div>
+
+    @if (createValidation(); as msg) {
+      <p class="form-error" role="alert">{{ msg }}</p>
+    }
+  </form>
+
+  <!-- Lista de códigos -->
+  <div class="discount-table-wrapper" role="region" aria-label="Listado de códigos de descuento">
+    @if (loadError(); as msg) {
+      <div class="state-card state-card--error" role="alert">
+        <div class="state-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <h3 class="state-card__title">No pudimos cargar los códigos</h3>
+        <p class="state-card__desc">{{ msg }}</p>
+        <button type="button" class="btn btn--secondary btn--compact" (click)="loadCodes()">
+          Reintentar
+        </button>
+      </div>
+    } @else if (isLoading()) {
+      <div class="state-card state-card--loading" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <p class="state-card__desc">Cargando códigos…</p>
+      </div>
+    } @else if (codes().length === 0) {
+      <div class="state-card state-card--empty">
+        <div class="state-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon">
+            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+            <path d="M13 5v2"/>
+            <path d="M13 17v2"/>
+            <path d="M13 11v2"/>
+          </svg>
+        </div>
+        <h3 class="state-card__title">Aún no hay códigos</h3>
+        <p class="state-card__desc">
+          Crea el primero con el formulario de arriba. Aparecerá en la pantalla
+          de pago del Plan Pareja Completo en cuanto esté marcado como tal.
+        </p>
+      </div>
+    } @else {
+      <table class="discount-table">
+        <thead>
+          <tr>
+            <th scope="col">Código</th>
+            <th scope="col">%</th>
+            <th scope="col">Descripción</th>
+            <th scope="col">Caduca</th>
+            <th scope="col">Estado</th>
+            <th scope="col" class="th-actions">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (code of codes(); track code.id) {
+            <tr [class.row--inactive]="!toBool(code.active)">
+              <td>
+                <span class="discount-code-text">{{ code.code }}</span>
+              </td>
+              <td>
+                <span class="discount-percent">{{ code.percent }}%</span>
+              </td>
+              <td>
+                @if (code.description) {
+                  <span class="discount-description">{{ code.description }}</span>
+                } @else {
+                  <span class="muted-dash">—</span>
+                }
+              </td>
+              <td>
+                @if (code.expiresAt) {
+                  <span [class.expired]="isExpired(code)" [title]="formatDate(code.expiresAt)">
+                    {{ formatDate(code.expiresAt) }}
+                    @if (isExpired(code)) {
+                      <span class="expired-tag" aria-label="Cupón caducado">(caducado)</span>
+                    }
+                  </span>
+                } @else {
+                  <span class="muted-dash">Sin caducidad</span>
+                }
+              </td>
+              <td>
+                <label class="toggle" [attr.aria-label]="'Activar o desactivar ' + code.code">
+                  <input
+                    type="checkbox"
+                    class="toggle__input"
+                    [checked]="toBool(code.active)"
+                    [disabled]="isToggling(code.id)"
+                    (change)="toggleActive(code)"
+                  />
+                  <span class="toggle__track" aria-hidden="true">
+                    <span class="toggle__thumb"></span>
+                  </span>
+                </label>
+              </td>
+              <td class="th-actions">
+                <button
+                  type="button"
+                  class="btn-icon-action"
+                  (click)="openEdit(code)"
+                  [disabled]="isUpdating() || pendingDeleteId() === code.id"
+                  [attr.aria-label]="'Editar código ' + code.code"
+                  [title]="'Editar ' + code.code"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-sm" aria-hidden="true">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="btn-icon-action btn-icon-action--danger"
+                  (click)="deleteCode(code)"
+                  [disabled]="pendingDeleteId() !== null"
+                  [attr.aria-label]="'Eliminar código ' + code.code"
+                  [title]="'Eliminar ' + code.code"
+                >
+                  @if (pendingDeleteId() === code.id) {
+                    <span class="spinner spinner--xs" aria-hidden="true"></span>
+                  } @else {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon-sm" aria-hidden="true">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/>
+                      <path d="M10 11v6"/>
+                      <path d="M14 11v6"/>
+                      <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  }
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</section>
+
+<!-- Modal de edición -->
+@if (editingCode(); as code) {
+  <div
+    class="modal-backdrop"
+    role="presentation"
+    tabindex="-1"
+    (click)="closeEdit()"
+    (keydown.escape)="closeEdit()"
+  >
+    <div
+      class="modal-card modal-card--discount"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="dc-edit-title"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+    >
+      <header class="modal-header">
+        <div class="modal-header__info">
+          <div class="account-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon">
+              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+              <path d="M13 5v2"/>
+              <path d="M13 17v2"/>
+              <path d="M13 11v2"/>
+            </svg>
+          </div>
+          <div>
+            <span class="modal-header__eyebrow">Editar código</span>
+            <h2 id="dc-edit-title" class="modal-header__title">
+              <span class="discount-code-text">{{ code.code }}</span>
+            </h2>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close"
+          (click)="closeEdit()"
+          [disabled]="isUpdating()"
+          aria-label="Cerrar modal de edición"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </header>
+
+      <div class="modal-body">
+        @if (editValidation(); as msg) {
+          <div class="alert alert--error" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="alert-icon">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ msg }}</span>
+          </div>
+        }
+
+        <form (ngSubmit)="submitEdit()" class="form-stack" novalidate>
+          <div class="form-group">
+            <label for="dc-edit-percent" class="form-label">% descuento</label>
+            <input
+              id="dc-edit-percent"
+              type="number"
+              class="form-input"
+              inputmode="numeric"
+              min="1"
+              max="100"
+              step="1"
+              [value]="editForm().percent"
+              (input)="updateEditField('percent', +$any($event.target).value)"
+              [disabled]="isUpdating()"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="dc-edit-description" class="form-label">Descripción</label>
+            <input
+              id="dc-edit-description"
+              type="text"
+              class="form-input"
+              autocomplete="off"
+              maxlength="120"
+              [value]="editForm().description"
+              (input)="updateEditField('description', $any($event.target).value)"
+              [disabled]="isUpdating()"
+              placeholder="Sin descripción"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="dc-edit-expires" class="form-label">Caduca (opcional)</label>
+            <input
+              id="dc-edit-expires"
+              type="datetime-local"
+              class="form-input"
+              [value]="editForm().expiresAt"
+              (input)="updateEditField('expiresAt', $any($event.target).value)"
+              [disabled]="isUpdating()"
+            />
+          </div>
+
+          <div class="card-action card-action--row">
+            <button
+              type="button"
+              class="btn btn--secondary btn--compact"
+              (click)="closeEdit()"
+              [disabled]="isUpdating()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="btn btn--primary btn--compact"
+              [disabled]="isUpdating()"
+            >
+              {{ isUpdating() ? 'Guardando…' : 'Guardar cambios' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
