@@ -217,6 +217,45 @@
   margin-bottom: 1rem;
 }
 
+/* Variante del section-title para eslogan principal dentro de la
+   sección showcase. Más grande que el section-title genérico, con
+   un acento rosa en la segunda línea ("digital a medida") que
+   refuerza visualmente lo diferencial del producto. */
+.showcase-slogan {
+  font-size: clamp(2rem, 4.6vw, 3.25rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.showcase-slogan__accent {
+  display: inline-block;
+  margin-top: 0.35rem;
+  background: linear-gradient(135deg, #be185d, #db2777);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+}
+
+.showcase-slogan__accent::after {
+  /* Subrayado decorativo bajo "digital a medida" para que se lea
+     como el ancla visual del eslogan. */
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -0.35rem;
+  height: 0.35rem;
+  background: linear-gradient(90deg, #fbcfe8, #f9a8d4);
+  border-radius: 999px;
+  z-index: -1;
+  opacity: 0.85;
+}
+
 .section-subtitle {
   font-size: 1.1rem;
   color: #64748b;
@@ -260,8 +299,21 @@
 .mockup-card {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
-  gap: 3.5rem;
-  align-items: center;
+  grid-template-rows: auto auto;
+  /* Layout final:
+       ┌────────┬──────────┐
+       │ phone  │ details  │ ← fila 1
+       │ (col 1,│ (col 2)  │
+       │ span 2)│          │
+       ├────────┼──────────┤
+       │ phone  │ demo     │ ← fila 2: el disclaimer ocupa el
+       └────────┴──────────┘   hueco que había bajo los checks. */
+  grid-template-areas:
+    'phone details'
+    'phone demo';
+  column-gap: 3.5rem;
+  row-gap: 1.25rem;
+  align-items: start;
   background: linear-gradient(145deg, #fffafa, #fdf2f8);
   border: 1px solid rgba(244, 114, 182, 0.2);
   border-radius: 2rem;
@@ -269,15 +321,21 @@
   box-shadow: 0 20px 45px rgba(190, 24, 93, 0.08);
 }
 
-/* Phone Frame */
-.phone-frame {
-  max-width: 330px;
-  margin: 0 auto;
-  background: #0f172a;
-  border-radius: 2.5rem;
-  padding: 0.85rem;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+.mockup-card > .phone-frame {
+  grid-area: phone;
+  align-self: center;
 }
+
+.mockup-card > .demo-disclaimer {
+  grid-area: demo;
+}
+
+.mockup-card > .mockup-details {
+  grid-area: details;
+  align-self: start;
+}
+
+/* Phone Frame (definido más abajo, junto al `.phone-demo-badge`) */
 
 .phone-notch {
   width: 100px;
@@ -634,6 +692,116 @@
   font-size: 0.68rem;
   color: #059669;
   font-weight: 700;
+}
+
+/* Demo badge sobre el marco del teléfono.
+   Deja claro que el screenshot es una vista previa, no la app real. */
+.phone-demo-badge {
+  position: absolute;
+  top: -0.6rem;
+  right: -0.6rem;
+  z-index: 2;
+  padding: 0.25rem 0.55rem;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
+  text-transform: uppercase;
+}
+
+/* Phone frame necesita ser relativo para anclar el badge */
+.phone-frame {
+  position: relative;
+  max-width: 330px;
+  margin: 0 auto;
+  background: #0f172a;
+  border-radius: 2.5rem;
+  padding: 0.85rem;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+/* Disclaimer: avisa que es demo y CTA a la invitación real de
+   Judith & Jesús. En desktop vive en la columna derecha debajo de
+   la lista de detalles (grid-area: `demo`); en móvil se apila al
+   final del bloque. Sin `max-width` para que estire al de la columna. */
+.demo-disclaimer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1.1rem 1.15rem;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px dashed rgba(244, 114, 182, 0.4);
+  border-radius: 1.25rem;
+  text-align: left;
+  backdrop-filter: blur(4px);
+}
+
+.demo-disclaimer__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: flex-start;
+  padding: 0.25rem 0.65rem;
+  background: var(--admin-primary-light, #fdf2f8);
+  color: #be185d;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  border: 1px solid rgba(190, 24, 93, 0.2);
+}
+
+.demo-disclaimer__badge svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.demo-disclaimer__text {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.demo-disclaimer__text strong {
+  color: #be185d;
+  font-weight: 700;
+}
+
+.demo-disclaimer__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  align-self: stretch;
+  padding: 0.7rem 1rem;
+  background: linear-gradient(135deg, #be185d, #db2777);
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 0.85rem;
+  box-shadow: 0 6px 18px rgba(190, 24, 93, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.demo-disclaimer__cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(190, 24, 93, 0.4);
+}
+
+.demo-disclaimer__cta:focus-visible {
+  outline: 3px solid rgba(190, 24, 93, 0.4);
+  outline-offset: 2px;
+}
+
+.demo-disclaimer__cta svg {
+  width: 0.95rem;
+  height: 0.95rem;
 }
 
 /* Mockup Details Sidebar */
@@ -1269,8 +1437,18 @@
 @media (max-width: 1024px) {
   .mockup-card {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      'phone'
+      'details'
+      'demo';
     gap: 2.5rem;
     padding: 2.25rem;
+  }
+
+  .mockup-card > .phone-frame,
+  .mockup-card > .mockup-details,
+  .mockup-card > .demo-disclaimer {
+    align-self: stretch;
   }
 }
 

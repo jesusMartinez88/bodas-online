@@ -60,9 +60,12 @@
   <section id="demo" class="showcase-section">
     <div class="section-header">
       <span class="section-tag">Experiencia en Vivo</span>
-      <h2 class="section-title">Diseñado para emocionar a tus invitados y hacerte la vida fácil</h2>
+      <h2 class="section-title showcase-slogan">
+        Diseñamos tu invitación digital a medida
+        <span class="showcase-slogan__accent">Organiza tu boda facilmente</span>
+      </h2>
       <p class="section-subtitle">
-        Descubrí la diferencia entre enviar un PDF estático y ofrecer una experiencia interactiva completa.
+        Descubre la diferencia entre enviar un PDF estático y ofrecer una experiencia interactiva completa.
       </p>
     </div>
 
@@ -155,7 +158,39 @@
                 </div>
               </div>
             </div>
+            <span class="phone-demo-badge" aria-hidden="true">DEMO</span>
           </div>
+
+          <!-- Disclaimer: el mockup de arriba es visual; abajo, la
+            invitación real que ya está en producción para que el
+            visitante pueda navegar como un invitado más. -->
+          <aside class="demo-disclaimer" aria-label="Aviso de demo y enlace a invitación real">
+            <span class="demo-disclaimer__badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              Vista previa
+            </span>
+            <p class="demo-disclaimer__text">
+              Es solo una <strong>simulación visual</strong>. Si
+              querés ver cómo se siente la experiencia real, entrá a la
+              invitación de Judith & Jesús — funciona como si fueras un
+              invitado más.
+            </p>
+            <a
+              routerLink="/judith-jesus"
+              target="_blank"
+              rel="noopener"
+              class="demo-disclaimer__cta"
+            >
+              <span>Ver invitación real de Judith & Jesús</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M7 17 17 7"/>
+                <path d="M7 7h10v10"/>
+              </svg>
+            </a>
+          </aside>
 
           <div class="mockup-details">
             <h3 class="details-title">Una invitación viva que tus invitados siempre llevan encima</h3>
