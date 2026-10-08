@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LandingFooterComponent } from '../landing-footer/landing-footer.component';
 import { LandingHeaderComponent } from '../landing-header/landing-header.component';
 import { SectionNavigationService } from '../../services/section-navigation.service';
+import { SeoService } from '../../services/seo.service';
 
 interface Testimonial {
   couple: string;
@@ -34,9 +35,10 @@ interface FeaturePill {
   styleUrl: './landing.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LandingComponent {
+export class LandingComponent implements OnInit {
   /** Acceso público al servicio para usarlo desde la plantilla. */
   readonly nav = inject(SectionNavigationService);
+  private readonly seo = inject(SeoService);
 
   readonly activePreviewTab = signal<'guest' | 'couple'>('guest');
   readonly openFaqIndex = signal<number | null>(0);
@@ -188,5 +190,94 @@ export class LandingComponent {
 
   toggleFaq(index: number): void {
     this.openFaqIndex.update((current) => (current === index ? null : index));
+  }
+
+  /**
+   * SEO de la landing. Se aplica una sola vez al montar la página:
+   * el SEO es estático para esta ruta (a diferencia de las páginas
+   * de invitación, que son dinámicas).
+   *
+   *   - Title optimizado con keywords largas que la gente busca en
+   *     Google cuando planifica una boda.
+   *   - Description con CTA + números concretos (pago único, 24-48h).
+   *   - Canonical + OG + Twitter Card apuntando al dominio público.
+   *   - JSON-LD `Organization` + `Service` para que Google entienda
+   *     qué es la web (queda listo para cuando enriquezcamos la
+   *     home con FAQ/HowTo en la Fase 3).
+   */
+  ngOnInit(): void {
+    const canonical = 'https://bodas-online.onrender.com/';
+    const ogImage = `${canonical}og-image.jpg`;
+
+    this.seo.update({
+      title:
+        'Bodas Online · Invitación de boda digital con RSVP y gestión de mesas',
+      description:
+        'Creá tu invitación de boda online con confirmación de asistencia, organizador visual de mesas y playlist colaborativa. Pago único de 59€, lista en 24-48 horas.',
+      keywords:
+        'invitación de boda digital, RSVP online, gestión de mesas boda, invitación web boda, boda online',
+      canonical,
+      image: ogImage,
+      og: {
+        type: 'website',
+        siteName: 'Bodas Online',
+        locale: 'es_ES',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        creator: '@bodasonline',
+      },
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'Organization',
+            '@id': `${canonical}#organization`,
+            name: 'Bodas Online',
+            url: canonical,
+            logo: `${canonical}favicon-ring.svg`,
+            description:
+              'Plataforma de invitaciones de boda digitales con RSVP, gestión de mesas y panel para novios.',
+          },
+          {
+            '@type': 'Service',
+            '@id': `${canonical}#service`,
+            serviceType: 'Invitación de boda digital',
+            provider: { '@id': `${canonical}#organization` },
+            name: 'Plan Pareja Completo',
+            description:
+              'Invitación web personalizada con confirmación de asistencia (RSVP) en tiempo real, organizador visual de mesas, playlist colaborativa, control de alergias y panel privado para los novios.',
+            areaServed: { '@type': 'Country', name: 'España' },
+            offers: {
+              '@type': 'Offer',
+              price: '59.00',
+              priceCurrency: 'EUR',
+              availability:
+                'https://schema.org/InStock',
+              url: `${canonical}register`,
+            },
+          },
+          // FAQPage: extraído del array `faqs` de este mismo componente.
+          // Permite a Google mostrar Q&A directamente en los resultados
+          // de búsqueda (rich snippet FAQ), aumenta CTR y reduce soporte.
+          // Se filtra la Q&A al JSON-LD con sus respuestas completas,
+          // independientemente de si el acordeón está abierto en el DOM.
+          {
+            '@type': 'FAQPage',
+            '@id': `${canonical}#faq`,
+            url: canonical,
+            inLanguage: 'es',
+            mainEntity: this.faqs.map((f) => ({
+              '@type': 'Question',
+              name: f.question,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: f.answer,
+              },
+            })),
+          },
+        ],
+      },
+    });
   }
 }

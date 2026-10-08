@@ -1,0 +1,10 @@
+{
+  "requests": [
+    {
+      "aspect_ratio": "4:3",
+      "resolution": "2K",
+      "output_file": "og-image",
+      "prompt": "Elegant social preview banner for a Spanish wedding SaaS product. Soft pink to magenta gradient background, subtle bokeh circles and floating soft confetti. Centered headline text in Spanish reading BODAS ONLINE in bold modern serif. Subline in elegant cursive script reading exactly 'Diseñamos tu invitación digital a medida' with correct Spanish accents on the n. A delicate white gold wedding ring outline as decorative icon top-right. Soft glow and depth. No watermarks, no signatures, no text overlay other than the BODAS ONLINE headline and the Diseñamos tagline. No logos from third parties. Clean composition. Premium SaaS landing page hero aesthetic, ultra sharp."
+    }
+  ]
+}

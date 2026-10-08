@@ -3,9 +3,28 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-    <title>Bodas Online</title>
+    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
+    <title>Bodas Online · Invitación de boda digital con RSVP y gestión de mesas</title>
     <base href="/" />
     <link rel="icon" type="image/svg+xml" href="favicon-ring.svg" />
+    <link rel="alternate icon" href="favicon.svg" type="image/svg+xml" />
+
+    <!-- Idiomas: declaramos explícitamente que la home es es-ES
+         (por si mañana se internacionaliza y aparece otra variante). -->
+    <link rel="alternate" hreflang="es-ES" href="https://bodas-online.onrender.com/" />
+    <link rel="alternate" hreflang="x-default" href="https://bodas-online.onrender.com/" />
+
+    <!-- Preconnect:热身 de TLS a orígenes externos que vamos a
+         golpear en la primera interacción. Ahorra entre 100-300ms
+         en el LCP de la landing al evitar el handshake de TLS
+         cuando Google Fonts o el backend se piden tarde. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://boda-backend-4e6z.onrender.com" crossorigin />
+    <!-- dns-prefetch como fallback para navegadores que aún no
+         soportan preconnect (Safari viejos). -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json" />
@@ -16,8 +35,32 @@
     <meta name="apple-mobile-web-app-title" content="Bodas Online" />
     <link rel="apple-touch-icon" href="favicon-ring.svg" />
 
-    <!-- Meta tags para PWA -->
-    <meta name="description" content="Invitación y gestión de bodas online" />
+    <!-- SEO base. Estos tags son el fallback para cuando JS no corre
+         (crawlers sin JS, vista de "ver código fuente"). Cada
+         componente actualiza su propio SEO vía `SeoService` cuando
+         monta: este bloque representa lo que ve un crawler que NO
+         ejecuta Angular. -->
+    <meta name="description" content="Creá tu invitación de boda online con confirmación de asistencia, organizador visual de mesas y playlist colaborativa. Pago único de 59€, lista en 24-48 horas." />
+    <meta name="keywords" content="invitación de boda digital, RSVP online, gestión de mesas boda, invitación web boda, boda online, organizador mesas" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Discord…). -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Bodas Online" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:title" content="Bodas Online · Invitación de boda digital con RSVP y gestión de mesas" />
+    <meta property="og:description" content="Creá tu invitación de boda online con confirmación de asistencia, organizador visual de mesas y playlist colaborativa. Pago único de 59€, lista en 24-48 horas." />
+    <meta property="og:image" content="https://bodas-online.onrender.com/og-image.jpg" />
+    <meta property="og:image:width" content="2400" />
+    <meta property="og:image:height" content="1350" />
+    <meta property="og:image:alt" content="Bodas Online — Diseñamos tu invitación digital a medida" />
+
+    <!-- Twitter Cards. -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Bodas Online · Invitación de boda digital con RSVP y gestión de mesas" />
+    <meta name="twitter:description" content="Creá tu invitación de boda online con confirmación de asistencia, organizador visual de mesas y playlist colaborativa. Pago único de 59€." />
+    <meta name="twitter:image" content="https://bodas-online.onrender.com/og-image.jpg" />
+    <meta name="twitter:image:alt" content="Bodas Online — Diseñamos tu invitación digital a medida" />
 
     <link
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&display=swap"

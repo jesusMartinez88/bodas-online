@@ -1,9 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset
+        xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <!-- Landing pública: única URL indexable del producto. -->
+  <!-- Las invitaciones privadas (/:slug) NO aparecen aquí a propósito:
+       son URLs públicas por diseño pero el producto no las lista en
+       el sitemap. Google las descubre si enlaces externos las apuntan. -->
   <url>
     <loc>https://bodas-online.onrender.com/</loc>
-    <lastmod>2026-09-03</lastmod>
-    <!-- <changefreq>daily</changefreq> -->
+    <lastmod>2026-10-06</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://bodas-online.onrender.com/og-image.jpg</image:loc>
+      <image:title>Bodas Online — Diseñamos tu invitación digital a medida</image:title>
+      <image:caption>Plataforma de invitaciones de boda digitales con RSVP, gestión de mesas y panel privado para los novios.</image:caption>
+    </image:image>
   </url>
 </urlset>
