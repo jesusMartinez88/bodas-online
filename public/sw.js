@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bodas-online-v2.1.0';
+const CACHE_NAME = 'bodas-online-v2.1.1';
 const urlsToCache = ['/', '/index.html', '/favicon.svg', '/favicon-ring.svg'];
 
 /**
