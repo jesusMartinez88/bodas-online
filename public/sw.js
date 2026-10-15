@@ -1,5 +1,5 @@
-const CACHE_NAME = 'bodas-online-v2.1.0';
-const urlsToCache = ['/', '/index.html', '/favicon.svg', '/favicon-ring.svg'];
+const CACHE_NAME = 'tu-boda-online-v2.1.0';
+const urlsToCache = ['/', '/index.html', '/favicon-ring.svg', '/favicon.svg'];
 
 /**
  * ¿La URL apunta a un chunk de build de Angular/Vite?

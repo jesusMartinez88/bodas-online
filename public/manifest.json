@@ -1,7 +1,7 @@
 {
-  "name": "Bodas Online",
-  "short_name": "Bodas Online",
-  "description": "Invitación y gestión de bodas online. Crea tu invitación, gestiona invitados y mesas, controla alergias y mucho más.",
+  "name": "Tu Boda Online",
+  "short_name": "Tu Boda Online",
+  "description": "Invitación y gestión de tu boda online. Crea tu invitación, gestiona invitados y mesas, controla alergias y mucho más.",
   "theme_color": "#ec4899",
   "background_color": "#fce7f3",
   "display": "standalone",

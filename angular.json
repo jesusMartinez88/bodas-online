@@ -8,7 +8,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "bodas-online": {
+    "tu-boda-online": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -86,10 +86,10 @@
           "builder": "@ngx-env/builder:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "bodas-online:build:production"
+              "buildTarget": "tu-boda-online:build:production"
             },
             "development": {
-              "buildTarget": "bodas-online:build:development"
+              "buildTarget": "tu-boda-online:build:development"
             }
           },
           "defaultConfiguration": "development"

@@ -1,4 +1,4 @@
-# Configuración PWA - Bodas Online
+# Configuración PWA - Tu Boda Online
 
 ## ✅ Implementado
 
@@ -48,7 +48,7 @@ Para lanzar una nueva versión:
 1. Edita `public/sw.js`
 2. Cambia `CACHE_NAME` a una nueva versión:
    ```javascript
-   const CACHE_NAME = 'bodas-online-v2.0.0'; // Incrementar versión
+   const CACHE_NAME = 'tu-boda-online-v2.0.0'; // Incrementar versión
    ```
 3. Haz build y deploy
 4. Los usuarios verán automáticamente el prompt de actualización
@@ -78,7 +78,7 @@ Luego actualizar `public/manifest.json` con estos iconos.
 
 ```bash
 npm run build
-npx http-server dist/bodas-online/browser -p 8080
+npx http-server dist/tu-boda-online/browser -p 8080
 ```
 
 ### En Chrome DevTools:

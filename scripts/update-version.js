@@ -40,8 +40,8 @@ if (fs.existsSync(packageLockPath)) {
 const swPath = path.join(__dirname, '..', 'public', 'sw.js');
 let swContent = fs.readFileSync(swPath, 'utf8');
 swContent = swContent.replace(
-  /const CACHE_NAME = 'bodas-online-v[^']*';/,
-  `const CACHE_NAME = 'bodas-online-v${version}';`,
+  /const CACHE_NAME = 'tu-boda-online-v[^']*';/,
+  `const CACHE_NAME = 'tu-boda-online-v${version}';`,
 );
 fs.writeFileSync(swPath, swContent);
 console.log('✅ sw.js actualizado');
