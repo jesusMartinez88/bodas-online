@@ -17,6 +17,13 @@ export interface VisitStats {
   lastVisitAt: string | null;
 }
 
+export interface RegisterClickStats {
+  totalClicks: number;
+  todayClicks: number;
+  weekClicks: number;
+  lastClickAt: string | null;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -50,6 +57,27 @@ export class AdminService {
     return firstValueFrom(
       this.http.get<ApiResponse<VisitStats>>(`${this.baseUrl}/api/admin/stats/visits`),
     ).then((res) => res.data as VisitStats);
+  }
+
+  getRegisterClickStats(): Promise<RegisterClickStats> {
+    return firstValueFrom(
+      this.http.get<ApiResponse<RegisterClickStats>>(
+        `${this.baseUrl}/api/admin/stats/register-clicks`,
+      ),
+    ).then((res) => res.data as RegisterClickStats);
+  }
+
+  /**
+   * Notifica al backend que un visitante ha hecho click en un botón "Registrar".
+   * Es fire-and-forget: cualquier error se ignora para no entorpecer la UX.
+   * Si el endpoint aún no está desplegado en el backend, el catch lo absorbe.
+   */
+  trackRegisterClick(): void {
+    firstValueFrom(
+      this.http.post<ApiResponse<unknown>>(`${this.baseUrl}/api/stats/register-click`, {}),
+    ).catch(() => {
+      // no-op: si el backend no tiene el endpoint todavía, no rompemos la navegación
+    });
   }
 
   getLandingQuestionnaire(userId: number): Promise<LandingQuestionnaire | null> {

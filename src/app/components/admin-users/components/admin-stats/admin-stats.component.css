@@ -99,6 +99,19 @@
   border-color: #ddd6fe;
 }
 
+.stat-card--clicks .stat-card__icon-box {
+  background: #fff7ed;
+  color: #ea580c;
+}
+.stat-card--clicks:hover {
+  border-color: #fed7aa;
+}
+
+.stat-badge--warning {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
 .stat-card__content {
   display: flex;
   flex-direction: column;

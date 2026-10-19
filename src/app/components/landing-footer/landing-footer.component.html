@@ -49,7 +49,7 @@
       <h4 class="footer-heading">Acceso</h4>
       <ul class="footer-links">
         <li><a routerLink="/login">Iniciar Sesión</a></li>
-        <li><a routerLink="/register">Registrar Pareja</a></li>
+        <li><a routerLink="/register" (click)="onRegisterClick()">Registrar Pareja</a></li>
         <li>
           <a
             href="/#faq"
@@ -87,7 +87,7 @@
           </a>
         </li>
         <li>
-          <a routerLink="/register" class="footer-contact-link">
+          <a routerLink="/register" class="footer-contact-link" (click)="onRegisterClick()">
             🚀 Crear mi invitación →
           </a>
         </li>

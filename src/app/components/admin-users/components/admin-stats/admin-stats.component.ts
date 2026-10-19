@@ -5,7 +5,7 @@ import {
   input,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { VisitStats } from '../../../../services/admin.service';
+import { VisitStats, RegisterClickStats } from '../../../../services/admin.service';
 
 @Component({
   selector: 'app-admin-stats',
@@ -21,6 +21,7 @@ export class AdminStatsComponent {
   invitationCount = input.required<number>();
   noInvitationCount = input.required<number>();
   visitStats = input<VisitStats | null>(null);
+  registerClickStats = input<RegisterClickStats | null>(null);
 
   paidPercentage = computed(() => {
     const total = this.totalCount();
@@ -32,5 +33,13 @@ export class AdminStatsComponent {
     const total = this.totalCount();
     if (total === 0) return 0;
     return Math.round((this.invitationCount() / total) * 100);
+  });
+
+  /** Ratio de conversión visita → click en registrar. */
+  visitToClickRate = computed(() => {
+    const visits = this.visitStats()?.totalVisits ?? 0;
+    const clicks = this.registerClickStats()?.totalClicks ?? 0;
+    if (visits === 0) return 0;
+    return Math.round((clicks / visits) * 100);
   });
 }

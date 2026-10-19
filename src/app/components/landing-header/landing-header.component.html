@@ -21,7 +21,7 @@
     <!-- Acciones Desktop + toggle móvil -->
     <div class="header-actions">
       <a routerLink="/login" class="btn-text">Iniciar Sesión</a>
-      <a routerLink="/register" class="btn-header-cta">Crear Invitación</a>
+      <a routerLink="/register" class="btn-header-cta" (click)="onRegisterClick()">Crear Invitación</a>
       <button
         type="button"
         class="mobile-menu-toggle"
@@ -53,7 +53,7 @@
         <a routerLink="/contacto" class="mobile-nav-link" (click)="closeMobileMenu()">Contacto</a>
         <div class="mobile-actions">
           <a routerLink="/login" class="mobile-btn-secondary" (click)="closeMobileMenu()">Iniciar Sesión</a>
-          <a routerLink="/register" class="mobile-btn-primary" (click)="closeMobileMenu()">Crear mi Invitación</a>
+          <a routerLink="/register" class="mobile-btn-primary" (click)="onRegisterClick()">Crear mi Invitación</a>
         </div>
       </nav>
     </div>

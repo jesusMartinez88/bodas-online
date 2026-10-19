@@ -125,7 +125,7 @@ export class SeoService {
       image: og?.image ?? image,
       url: og?.url ?? canonical ?? this.currentUrl(),
       type: og?.type ?? 'website',
-      siteName: og?.siteName ?? 'Bodas Online',
+      siteName: og?.siteName ?? 'Tu Boda Online',
       locale: og?.locale ?? 'es_ES',
     };
 

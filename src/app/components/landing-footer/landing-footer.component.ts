@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { SectionNavigationService } from '../../services/section-navigation.service';
+import { AdminService } from '../../services/admin.service';
 
 /**
  * Footer compartido por las páginas públicas de marketing:
@@ -26,6 +27,7 @@ import { SectionNavigationService } from '../../services/section-navigation.serv
 })
 export class LandingFooterComponent {
   private readonly nav = inject(SectionNavigationService);
+  private readonly adminService = inject(AdminService);
 
   /** Año del copyright: se evalúa una sola vez al instanciar el componente. */
   readonly copyrightYear = new Date().getFullYear();
@@ -61,5 +63,10 @@ export class LandingFooterComponent {
    */
   goToSection(event: Event, sectionId: string): void {
     this.nav.goToSection(event, sectionId);
+  }
+
+  /** Notifica al backend que el visitante ha hecho click en un CTA de "Registrar". */
+  onRegisterClick(): void {
+    this.adminService.trackRegisterClick();
   }
 }

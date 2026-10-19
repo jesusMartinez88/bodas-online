@@ -4,6 +4,7 @@ import { LandingFooterComponent } from '../landing-footer/landing-footer.compone
 import { LandingHeaderComponent } from '../landing-header/landing-header.component';
 import { SectionNavigationService } from '../../services/section-navigation.service';
 import { SeoService } from '../../services/seo.service';
+import { AdminService } from '../../services/admin.service';
 
 interface Testimonial {
   couple: string;
@@ -39,6 +40,7 @@ export class LandingComponent implements OnInit {
   /** Acceso público al servicio para usarlo desde la plantilla. */
   readonly nav = inject(SectionNavigationService);
   private readonly seo = inject(SeoService);
+  private readonly adminService = inject(AdminService);
 
   readonly activePreviewTab = signal<'guest' | 'couple'>('guest');
   readonly openFaqIndex = signal<number | null>(0);
@@ -206,12 +208,12 @@ export class LandingComponent implements OnInit {
    *     home con FAQ/HowTo en la Fase 3).
    */
   ngOnInit(): void {
-    const canonical = 'https://bodas-online.onrender.com/';
+    const canonical = 'https://tubodaonline.onrender.com/';
     const ogImage = `${canonical}og-image.jpg`;
 
     this.seo.update({
       title:
-        'Bodas Online · Invitación de boda digital con RSVP y gestión de mesas',
+        'Tu Boda Online · Invitación de boda digital con RSVP y gestión de mesas',
       description:
         'Creá tu invitación de boda online con confirmación de asistencia, organizador visual de mesas y playlist colaborativa. Pago único de 59€, lista en 24-48 horas.',
       keywords:
@@ -220,12 +222,12 @@ export class LandingComponent implements OnInit {
       image: ogImage,
       og: {
         type: 'website',
-        siteName: 'Bodas Online',
+        siteName: 'Tu Boda Online',
         locale: 'es_ES',
       },
       twitter: {
         card: 'summary_large_image',
-        creator: '@bodasonline',
+        creator: '@tubodaonline',
       },
       jsonLd: {
         '@context': 'https://schema.org',
@@ -233,9 +235,9 @@ export class LandingComponent implements OnInit {
           {
             '@type': 'Organization',
             '@id': `${canonical}#organization`,
-            name: 'Bodas Online',
+            name: 'Tu Boda Online',
             url: canonical,
-            logo: `${canonical}favicon-ring.svg`,
+            logo: `${canonical}favicon.svg`,
             description:
               'Plataforma de invitaciones de boda digitales con RSVP, gestión de mesas y panel para novios.',
           },
@@ -279,5 +281,10 @@ export class LandingComponent implements OnInit {
         ],
       },
     });
+  }
+
+  /** Notifica al backend que el visitante ha hecho click en un CTA de "Registrar". */
+  onRegisterClick(): void {
+    this.adminService.trackRegisterClick();
   }
 }

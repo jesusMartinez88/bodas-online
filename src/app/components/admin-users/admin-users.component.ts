@@ -12,7 +12,7 @@ import {
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AdminService, VisitStats } from '../../services/admin.service';
+import { AdminService, VisitStats, RegisterClickStats } from '../../services/admin.service';
 import { AuthService } from '../../services/auth.service';
 import {
   AdminUser,
@@ -114,6 +114,8 @@ export class AdminUsersComponent implements OnInit {
 
   // Visitas globales
   visitStats = signal<VisitStats | null>(null);
+  // Clicks en botones de registrar
+  registerClickStats = signal<RegisterClickStats | null>(null);
 
   // Estado del menú de acciones desplegable por fila
   openMenuUserId = signal<number | null>(null);
@@ -165,12 +167,22 @@ export class AdminUsersComponent implements OnInit {
   ngOnInit() {
     this.loadUsers();
     this.loadVisitStats();
+    this.loadRegisterClickStats();
   }
 
   loadVisitStats() {
     this.adminService
       .getVisitStats()
       .then((stats) => this.visitStats.set(stats))
+      .catch(() => {
+        // no-op: el stat pill simplemente no aparece
+      });
+  }
+
+  loadRegisterClickStats() {
+    this.adminService
+      .getRegisterClickStats()
+      .then((stats) => this.registerClickStats.set(stats))
       .catch(() => {
         // no-op: el stat pill simplemente no aparece
       });
