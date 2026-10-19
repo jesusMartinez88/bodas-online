@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, ElementRef, viewChild } from '@angular/core';
+import { Component, OnInit, inject, input, signal, computed, ElementRef, viewChild } from '@angular/core';
 
 import { GuestService, Guest } from '../../../services/guest.service';
 import { SettingsService } from '../../../services/settings.service';
@@ -90,6 +90,9 @@ export class TablesComponent implements OnInit {
   private settingsService = inject(SettingsService);
   private tableService = inject(TableService);
   private fb = inject(FormBuilder);
+
+  /** Slug del tenant (boda). Se reenvía al modal de invitado para enviarlo a Google Sheets como copia. */
+  readonly tenantSlug = input<string>('');
 
   guests = this.guestService.guests;
   maxGuests = computed(() => this.settingsService.settings().max_guests_per_table);

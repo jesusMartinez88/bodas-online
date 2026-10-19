@@ -964,7 +964,7 @@
 
     <!-- Modal para Añadir/Editar Invitado -->
     @if (showAddModal()) {
-      <app-guest-form-modal [guest]="selectedGuestForModal()" (modalClose)="closeAddModal()" />
+      <app-guest-form-modal [guest]="selectedGuestForModal()" [tenantSlug]="tenantSlug()" (modalClose)="closeAddModal()" />
     }
 
     <!-- Modal para Confirmar Eliminación de Mesa -->

@@ -22,6 +22,8 @@ export class GuestFormModalComponent implements OnInit {
   private guestService = inject(GuestService);
 
   readonly guest = input<Guest | null>(null);
+  /** Slug del tenant (boda) al que pertenece el invitado. Se envía a Google Sheets como copia de seguridad. */
+  readonly tenantSlug = input<string>('');
   readonly modalClose = output<void>();
 
   isLoading = signal(false);
@@ -106,7 +108,7 @@ export class GuestFormModalComponent implements OnInit {
           await this.guestService.updateGuest(this.editingGuestId()!, guestData);
         } else {
           guestData.sendEmail = false;
-          await this.guestService.registerGuest(guestData);
+          await this.guestService.registerGuest(guestData, this.tenantSlug() || undefined);
         }
 
         this.closeModal();

@@ -197,7 +197,7 @@ export class GuestService {
       guest.isSavedInBbdd = true;
 
       // Enviar también a Google Sheets como backup (JSONP para evitar CORS)
-      this.addToGoogleSheetsJsonp(guest).catch((error) => {
+      this.addToGoogleSheetsJsonp(guest, tenantSlug).catch((error) => {
         console.warn('Error adding to Google Sheets backup (JSONP):', error);
       });
       confetti({
@@ -212,7 +212,7 @@ export class GuestService {
       console.error('Error registering guest:', error);
       // Si falla el servidor, intentar guardar en Google Sheets vía JSONP
       try {
-        await this.addToGoogleSheetsJsonp(guest);
+        await this.addToGoogleSheetsJsonp(guest, tenantSlug);
         confetti({
           particleCount: 150,
           spread: 70,
@@ -229,7 +229,7 @@ export class GuestService {
   }
 
   // Fallback usando JSONP (evita problemas CORS). Usa GET y un callback global.
-  private addToGoogleSheetsJsonp(guest: Guest): Promise<Record<string, unknown>> {
+  private addToGoogleSheetsJsonp(guest: Guest, slug?: string): Promise<Record<string, unknown>> {
     const base = this.sheetUrl;
     if (!base) {
       return Promise.reject(new Error('Google Sheets URL not configured'));
@@ -255,6 +255,7 @@ export class GuestService {
       params.set('isSavedInBbdd', String(guest.isSavedInBbdd ?? ''));
       params.set('allergies', guest.allergies || '');
       params.set('notes', guest.notes || '');
+      params.set('slug', slug || '');
       params.set('callback', callbackName);
 
       const script = document.createElement('script');

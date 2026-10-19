@@ -558,7 +558,7 @@
 
         <!-- Modal para Editar Invitado -->
         @if (showEditGuestModal()) {
-          <app-guest-form-modal [guest]="selectedGuestForEdit()" (modalClose)="closeEditGuestModal()" />
+          <app-guest-form-modal [guest]="selectedGuestForEdit()" [tenantSlug]="tenant()" (modalClose)="closeEditGuestModal()" />
         }
 
         <!-- Modal para Confirmar Eliminación de Invitado -->
@@ -573,7 +573,7 @@
     }
 
     @if (currentView() === 'tables') {
-      <app-tables />
+      <app-tables [tenantSlug]="tenant()" />
     }
 
     @if (currentView() === 'settings') {
