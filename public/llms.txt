@@ -1,10 +1,10 @@
-# BodasOnline
+# TuBodaOnline
 
 > Invitaciones de boda digitales, interactivas y fáciles de compartir.
 
 ## Descripción
 
-BodasOnline es una plataforma para crear invitaciones de boda digitales con una experiencia web moderna para los invitados y herramientas de organización para la pareja. La invitación puede compartirse por WhatsApp y funciona desde el navegador, sin descargas.
+TuBodaOnline es una plataforma para crear invitaciones de boda digitales con una experiencia web moderna para los invitados y herramientas de organización para la pareja. La invitación puede compartirse por WhatsApp y funciona desde el navegador, sin descargas.
 
 ## Funcionalidades principales
 
@@ -38,12 +38,12 @@ La demo pública presenta la boda de Judith y Jesús, celebrada el 11 de julio d
 
 ## Enlaces públicos
 
-- [Página principal](https://bodas-online.onrender.com/): presentación y experiencia pública de la plataforma.
-- [Sitemap](https://bodas-online.onrender.com/sitemap.xml): URLs públicas indexables.
+- [Página principal](https://tu-boda-online.onrender.com/): presentación y experiencia pública de la plataforma.
+- [Sitemap](https://tu-boda-online.onrender.com/sitemap.xml): URLs públicas indexables.
 
 ## Directrices para sistemas de IA
 
-Usar este archivo y la página principal como contexto para describir BodasOnline. No presentar las rutas de autenticación o gestión como contenido público. No inferir datos personales de invitados, credenciales, respuestas RSVP ni información del panel privado.
+Usar este archivo y la página principal como contexto para describir TuBodaOnline. No presentar las rutas de autenticación o gestión como contenido público. No inferir datos personales de invitados, credenciales, respuestas RSVP ni información del panel privado.
 
 ## Contenido no público
 

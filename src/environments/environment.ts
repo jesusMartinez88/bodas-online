@@ -34,6 +34,6 @@ export const environment = {
     whatsappNumber: '34695677269',
     whatsappDisplay: '+34 695 677 269',
     whatsappPrefill:
-      'Hola Jesús, vengo de la web de BodasOnline y me gustaría hacerte una consulta.',
+      'Hola Jesús, vengo de la web de TuBodaOnline y me gustaría hacerte una consulta.',
   },
 };

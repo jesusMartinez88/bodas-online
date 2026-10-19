@@ -4,4 +4,4 @@ Disallow: /login
 Disallow: /register
 Disallow: /*/dashboard
 
-Sitemap: https://bodas-online.onrender.com/sitemap.xml
+Sitemap: https://tu-boda-online.onrender.com/sitemap.xml
