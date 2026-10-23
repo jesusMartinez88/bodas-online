@@ -1,0 +1,161 @@
+# =============================================================================
+# Configuración de despliegue en Render — Tu Boda Online (Static Site)
+# =============================================================================
+# Cubre los hallazgos de la revisión de seguridad:
+#   #1 Frontend sin CSP / frame-ancestors / Referrer-Policy / Permissions-Policy
+#   #3 El fallback SPA devolvía 200 text/html para cualquier ruta inexistente
+#   #5 HSTS incoherente (10 años en el front, 1 año en el backend) y con preload
+#      sobre un subdominio de Render que no controlamos.
+#
+# NOTA IMPORTANTE — el servicio actual de Render se creó desde el Dashboard,
+# no desde este Blueprint. Para que estas reglas se apliquen tienes DOS vías:
+#
+#   A) Dashboard (efecto inmediato, sin tocar nada más):
+#      Render Dashboard > tu Static Site > Settings > Redirects & Rewrites
+#      y > HTTP Headers. Pega literalmente las reglas de `routes:` y `headers:`
+#      de este fichero. Render las valida al pegarlas.
+#
+#   B) Blueprint (reproducible, recomendado a medio plazo):
+#      Render Dashboard > New > Blueprint > apunta a este repositorio.
+#      Opcionalmente, si prefieres mantener el servicio actual, Render te
+#      ofrece "Apply" para aplicar los cambios del Blueprint encima de los
+#      servicios ya existentes.
+#
+# Render PRESERVA las cabeceras existentes que no aparezcan en el fichero,
+# así que añadir este `headers:` no elimina nada por accidente.
+# =============================================================================
+
+services:
+  - type: web
+    runtime: static
+    name: tubodaonline
+
+    # `pnpm build` == `ng build`, que usa `defaultConfiguration: production`
+    # (outputMode: server) y genera `dist/tu-boda-online/browser` + `/server`.
+    # Solo publicamos `browser`: el sitio se sirve como static site.
+    buildCommand: pnpm install --frozen-lockfile && pnpm build
+    staticPublishPath: ./dist/tu-boda-online/browser
+    autoDeploy: true
+
+    # -------------------------------------------------------------------------
+    # #3 — Fallback SPA que devuelve 200 para rutas inexistentes
+    # -------------------------------------------------------------------------
+    # Render sirve el fichero real si existe; si no, aplica la PRIMERA regla
+    # que coincide (de arriba abajo). Por eso las reglas de assets van ANTES
+    # del catch-all: reescriben las rutas con extensión de recurso a un
+    # destino inexistente, que Render responde con un 404 real en lugar de
+    # devolver el index.html con status 200.
+    #
+    # Patrones de Render: `/*.ext` casa con un único segmento en la raíz
+    # (`/main.js`), `/**/*.ext` con segmentos anidados (`/assets/main.js`).
+    # Es necesario listar ambas variantes para cubrir los assets con hash.
+    #
+    # VERIFICACIÓN TRAS EL DEPLOY (debe devolver 404, no 200):
+    #   curl -I https://tubodaonline.onrender.com/main-inexistente.js.map
+    #   curl -I https://tubodaonline.onrender.com/assets/inexistente.js
+    #
+    # Si tu versión de Render devolviera 200 en esos casos (no debería),
+    # borra las 8 reglas de assets y déjalas solo como mitigación en el
+    # servidor SSR (ver `server.ts` en este repo), que sí devuelve 404 real.
+    routes:
+      - type: rewrite
+        source: "/*.js"
+        destination: "/__asset_not_found__"
+      - type: rewrite
+        source: "/*.css"
+        destination: "/__asset_not_found__"
+      - type: rewrite
+        source: "/*.map"
+        destination: "/__asset_not_found__"
+      - type: rewrite
+        source: "/*.json"
+        destination: "/__asset_not_found__"
+      - type: rewrite
+        source: "/*.txt"
+        destination: "/__asset_not_found__"
+      - type: rewrite
+        source: "/*.xml"
+        destination: "/__asset_not_found__"
+      - type: rewrite
+        source: "/**/*.js"
+        destination: "/__asset_not_found__"
+      - type: rewrite
+        source: "/**/*.css"
+        destination: "/__asset_not_found__"
+      - type: rewrite
+        source: "/**/*.map"
+        destination: "/__asset_not_found__"
+      - type: rewrite
+        source: "/**/*.json"
+        destination: "/__asset_not_found__"
+      # Catch-all de la SPA: cualquier ruta de navegación válida
+      # (`/`, `/login`, `/:tenant`, `/:tenant/dashboard`, ...) sirve el shell.
+      - type: rewrite
+        source: "/*"
+        destination: "/index.html"
+
+    # -------------------------------------------------------------------------
+    # #1 y #5 — Cabeceras de seguridad del frontend
+    # -------------------------------------------------------------------------
+    # La CSP está alineada con los recursos que la app usa de verdad:
+    #   · Stripe      → js.stripe.com (script), api.stripe.com (connect),
+    #                    hooks.stripe.com (frame 3DS)
+    #   · Google Fonts→ fonts.googleapis.com (style), fonts.gstatic.com (font)
+    #   · YouTube     → iframe del reproductor + API + thumbnails
+    #   · Backend     → boda-backend-4e6z.onrender.com (connect)
+    #   · OpenStreetMap → tiles del mapa (img-src https:)
+    # `frame-ancestors 'none'` + `X-Frame-Options: DENY` bloquean el clickjacking
+    # sobre login/registro. `X-Frame-Options` se mantiene por compatibilidad con
+    # navegadores antiguos.
+    headers:
+      - path: "/*"
+        name: Content-Security-Policy
+        value: >-
+          default-src 'self';
+          base-uri 'self';
+          object-src 'none';
+          frame-ancestors 'none';
+          form-action 'self';
+          script-src 'self' https://js.stripe.com https://www.youtube.com https://s.ytimg.com;
+          style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+          font-src 'self' https://fonts.gstatic.com data:;
+          img-src 'self' data: blob: https:;
+          media-src 'self' blob: https:;
+          connect-src 'self' https://boda-backend-4e6z.onrender.com https://api.stripe.com https://www.googleapis.com;
+          frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.youtube.com;
+          worker-src 'self' blob:;
+          manifest-src 'self';
+          upgrade-insecure-requests
+
+      - path: "/*"
+        name: X-Frame-Options
+        value: DENY
+
+      - path: "/*"
+        name: X-Content-Type-Options
+        value: nosniff
+
+      - path: "/*"
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+
+      - path: "/*"
+        name: Permissions-Policy
+        value: "camera=(), microphone=(), geolocation=(), payment=(self), browsing-topics=()"
+
+      # #5 — 1 año, alineado con el backend. Sin `preload`: el dominio raíz es
+      # `onrender.com` y no lo controlamos; con `includeSubDomains` sobre un
+      # subdominio de Render el preload es inútil, y 10 años es una decisión
+      # que no podemos revertir si mañana necesitamos otro host.
+      - path: "/*"
+        name: Strict-Transport-Security
+        value: "max-age=31536000; includeSubDomains"
+
+      # El shell HTML debe revalidarse siempre para que un deploy se vea
+      # inmediatamente, sin esperar a que expire la CDN.
+      # No tocamos el Cache-Control de `/*`: Render ya aplica su propia
+      # política (más agresiva para los assets con hash) y sobrescribirla
+      # aquí solo degradaría el cacheo del bundle.
+      - path: "/index.html"
+        name: Cache-Control
+        value: "no-cache, no-store, must-revalidate"

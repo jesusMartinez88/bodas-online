@@ -7,8 +7,8 @@
        son URLs públicas por diseño pero el producto no las lista en
        el sitemap. Google las descubre si enlaces externos las apuntan. -->
   <url>
-    <loc>https://tu-boda-online.onrender.com/</loc>
-    <lastmod>2026-09-03</lastmod>
+    <loc>https://tubodaonline.onrender.com/</loc>
+    <lastmod>2026-10-23</lastmod>
     <!-- <changefreq>daily</changefreq> -->
     <priority>1.0</priority>
     <image:image>

@@ -48,6 +48,16 @@ const reqHandler = createNodeRequestHandler((req, res, next) => {
     .catch(next);
 });
 
+const ASSET_PATH = /\.(?:js|mjs|cjs|css|map|json|txt|xml|ico|png|jpe?g|gif|svg|webp|avif|woff2?|ttf|eot)$/i;
+
+app.use((req, res, next) => {
+  if (ASSET_PATH.test(req.path)) {
+    res.status(404).type('text/plain').send('Not found');
+    return;
+  }
+  next();
+});
+
 app.use(reqHandler);
 
 if (isMainModule(import.meta.url)) {
