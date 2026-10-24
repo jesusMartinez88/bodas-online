@@ -35,59 +35,180 @@ services:
     # Solo publicamos `browser`: el sitio se sirve como static site.
     buildCommand: pnpm install --frozen-lockfile && pnpm build
     staticPublishPath: ./dist/tu-boda-online/browser
-    autoDeploy: true
+    # El sitio actual ya tiene auto-deploy activo en `main`. Se declara aquí
+    # para que el Blueprint sea la fuente de verdad de toda la config.
+    autoDeployTrigger: commit
 
     # -------------------------------------------------------------------------
-    # #3 — Fallback SPA que devuelve 200 para rutas inexistentes
+    # #3 — El fallback SPA devolvía 200 para rutas inexistentes
     # -------------------------------------------------------------------------
     # Render sirve el fichero real si existe; si no, aplica la PRIMERA regla
-    # que coincide (de arriba abajo). Por eso las reglas de assets van ANTES
-    # del catch-all: reescriben las rutas con extensión de recurso a un
-    # destino inexistente, que Render responde con un 404 real en lugar de
-    # devolver el index.html con status 200.
+    # que coincide (de arriba abajo). Estas reglas van ANTES del catch-all.
+    #
+    # DESTINO: `/__asset_not_found__.png` — y SOLO esa extensión, a propósito.
+    # Verificado en producción:
+    #   · un destino inexistente SIN extensión (`/__asset_not_found__`) lo
+    #     captura el catch-all `/*` y devuelve el index.html con status 200;
+    #   · un destino inexistente CON extensión de asset sí devuelve 404 real.
+    # La extensión `.png` es la que no está cubierta por ninguna regla, así
+    # que el destino no vuelve a evaluarse contra esta lista.
     #
     # Patrones de Render: `/*.ext` casa con un único segmento en la raíz
     # (`/main.js`), `/**/*.ext` con segmentos anidados (`/assets/main.js`).
-    # Es necesario listar ambas variantes para cubrir los assets con hash.
+    # El matcher es case-sensitive: `/*.map` captura `/foo.map` pero no
+    # `/foo.MAP`. El slug de tenant nunca lleva punto (el backend lo genera
+    # con `replace(/[^a-z0-9]+/g, "-")`), así que ninguna ruta de navegación
+    # legítima cae en estas reglas.
     #
-    # VERIFICACIÓN TRAS EL DEPLOY (debe devolver 404, no 200):
+    # VERIFICACIÓN TRAS EL DEPLOY (todas deben devolver 404, no 200):
     #   curl -I https://tubodaonline.onrender.com/main-inexistente.js.map
+    #   curl -I https://tubodaonline.onrender.com/inexistente.json
     #   curl -I https://tubodaonline.onrender.com/assets/inexistente.js
-    #
-    # Si tu versión de Render devolviera 200 en esos casos (no debería),
-    # borra las 8 reglas de assets y déjalas solo como mitigación en el
-    # servidor SSR (ver `server.ts` en este repo), que sí devuelve 404 real.
     routes:
       - type: rewrite
         source: "/*.js"
-        destination: "/__asset_not_found__"
+        destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/*.css"
-        destination: "/__asset_not_found__"
+        destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/*.map"
-        destination: "/__asset_not_found__"
+        destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/*.json"
-        destination: "/__asset_not_found__"
+        destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/*.txt"
-        destination: "/__asset_not_found__"
+        destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/*.xml"
-        destination: "/__asset_not_found__"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.svg"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.webp"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.avif"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.ico"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.jpg"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.jpeg"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.png"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.gif"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.zip"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.webm"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.mp4"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.woff"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.woff2"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.ttf"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.eot"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.html"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.htm"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.php"
+        destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/**/*.js"
-        destination: "/__asset_not_found__"
+        destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/**/*.css"
-        destination: "/__asset_not_found__"
+        destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/**/*.map"
-        destination: "/__asset_not_found__"
+        destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/**/*.json"
-        destination: "/__asset_not_found__"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.txt"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.xml"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.svg"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.webp"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.avif"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.ico"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.jpg"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.jpeg"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.png"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.gif"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.zip"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.webm"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.mp4"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.woff"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.woff2"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.ttf"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.eot"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.html"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.htm"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.php"
+        destination: "/__asset_not_found__.png"
       # Catch-all de la SPA: cualquier ruta de navegación válida
       # (`/`, `/login`, `/:tenant`, `/:tenant/dashboard`, ...) sirve el shell.
       - type: rewrite
@@ -147,6 +268,13 @@ services:
       # `onrender.com` y no lo controlamos; con `includeSubDomains` sobre un
       # subdominio de Render el preload es inútil, y 10 años es una decisión
       # que no podemos revertir si mañana necesitamos otro host.
+      #
+      # IMPORTANTE: Render aplica por defecto `max-age=315360000; includeSubdomains;
+      # preload` (10 años) en los static sites. Esta regla debe SUSTITUIRLO, no
+      # acompañarlo: si se sirven las dos, el navegador se queda con la más
+      # restrictiva (10 años) y el hallazgo #5 sigue abierto.
+      # Verifica con `curl -I https://tubodaonline.onrender.com/` que sale
+      # UNA sola cabecera strict-transport-security con max-age=31536000.
       - path: "/*"
         name: Strict-Transport-Security
         value: "max-age=31536000; includeSubDomains"
