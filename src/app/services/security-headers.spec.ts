@@ -14,10 +14,13 @@ describe('security headers policy', () => {
 
     expect(headers.get('X-Content-Type-Options')).toBe('nosniff');
     expect(headers.get('X-Frame-Options')).toBe('DENY');
-    expect(headers.get('Referrer-Policy')).toBe('no-referrer');
+    expect(headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
     expect(headers.get('Permissions-Policy')).toContain('microphone=()');
     expect(headers.get('Content-Security-Policy')).toContain("frame-ancestors 'none'");
-    expect(headers.get('Content-Security-Policy')).toContain('http://localhost:3000');
+    expect(headers.get('Content-Security-Policy')).toContain(
+      'https://boda-backend-4e6z.onrender.com',
+    );
+    expect(headers.get('Content-Security-Policy')).not.toContain('http://localhost:3000');
     expect(next).toHaveBeenCalledOnce();
   });
 });
