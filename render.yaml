@@ -46,12 +46,36 @@ services:
     # que coincide (de arriba abajo). Estas reglas van ANTES del catch-all.
     #
     # DESTINO: `/__asset_not_found__.png` — y SOLO esa extensión, a propósito.
-    # Verificado en producción:
+    # `.png` NO aparece entre los `source` de esta lista, así que el destino
+    # nunca vuelve a evaluarse contra estas reglas (sin bucles). No añadas una
+    # regla `/*.png`.
+    #
+    # Medido en producción (2026-10-26) con este mismo destination:
     #   · un destino inexistente SIN extensión (`/__asset_not_found__`) lo
     #     captura el catch-all `/*` y devuelve el index.html con status 200;
-    #   · un destino inexistente CON extensión de asset sí devuelve 404 real.
-    # La extensión `.png` es la que no está cubierta por ninguna regla, así
-    # que el destino no vuelve a evaluarse contra esta lista.
+    #   · un destino inexistente CON extensión de asset devuelve 404 real.
+    #
+    # Solo se listan extensiones donde el sitio devolvía algo distinto de 404:
+    #   · js css txt jpg gif zip mp4 -> Render devuelve 404 real; se fijan aquí
+    #     para no depender del default del proveedor.
+    #   · map json xml svg webp avif ico webm woff woff2 ttf eot -> Render
+    #     devuelve 200 con cuerpo VACÍO (su "soft 404" para estos MIME types).
+    #     Ese 200 vacío depende SOLO de la extensión de la ruta, NO del
+    #     destination (todas las reglas comparten destination y el resultado
+    #     cambia por extensión). Es el comportamiento nativo de Render y no se
+    #     puede alterar desde aquí.
+    #
+    # Lo que sí importa, y ya se cumple: una ruta de asset inexistente ya NO
+    # devuelve el index.html. Antes devolvía 200 text/html con 83 KB de HTML
+    # donde el cliente esperaba JS/JSON, lo que envenenaba la caché del CDN y
+    # rompía la detección de enlaces rotos. Ahora esas rutas devuelven 404
+    # real o 0 bytes, nunca HTML. Ver `SECURITY.md`.
+    #
+    # `.png` no está en la lista de sources a propósito: es el destination.
+    # Las demás extensiones (.csv, .wasm, .docx, ...) y las rutas de navegación
+    # sin punto las sirve el catch-all SPA con el index.html, que es lo
+    # correcto. El slug de tenant nunca lleva punto (el backend lo genera con
+    # `replace(/[^a-z0-9]+/g, "-")`), así que ninguna ruta legítima cae aquí.
     #
     # Patrones de Render: `/*.ext` casa con un único segmento en la raíz
     # (`/main.js`), `/**/*.ext` con segmentos anidados (`/assets/main.js`).
@@ -66,31 +90,16 @@ services:
     #   curl -I https://tubodaonline.onrender.com/assets/inexistente.js
     routes:
       - type: rewrite
-        source: "/*.js"
+        source: "/*.avif"
         destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/*.css"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/*.map"
+        source: "/*.eot"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/*.json"
-        destination: "/__asset_not_found__.png"
-      - type: rewrite
-        source: "/*.txt"
-        destination: "/__asset_not_found__.png"
-      - type: rewrite
-        source: "/*.xml"
-        destination: "/__asset_not_found__.png"
-      - type: rewrite
-        source: "/*.svg"
-        destination: "/__asset_not_found__.png"
-      - type: rewrite
-        source: "/*.webp"
-        destination: "/__asset_not_found__.png"
-      - type: rewrite
-        source: "/*.avif"
+        source: "/*.gif"
         destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/*.ico"
@@ -99,22 +108,31 @@ services:
         source: "/*.jpg"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/*.jpeg"
+        source: "/*.js"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/*.png"
+        source: "/*.json"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/*.gif"
+        source: "/*.map"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/*.zip"
+        source: "/*.mp4"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.svg"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.ttf"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/*.txt"
         destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/*.webm"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/*.mp4"
+        source: "/*.webp"
         destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/*.woff"
@@ -123,46 +141,22 @@ services:
         source: "/*.woff2"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/*.ttf"
+        source: "/*.xml"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/*.eot"
+        source: "/*.zip"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/*.html"
-        destination: "/__asset_not_found__.png"
-      - type: rewrite
-        source: "/*.htm"
-        destination: "/__asset_not_found__.png"
-      - type: rewrite
-        source: "/*.php"
-        destination: "/__asset_not_found__.png"
-      - type: rewrite
-        source: "/**/*.js"
+        source: "/**/*.avif"
         destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/**/*.css"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/**/*.map"
+        source: "/**/*.eot"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/**/*.json"
-        destination: "/__asset_not_found__.png"
-      - type: rewrite
-        source: "/**/*.txt"
-        destination: "/__asset_not_found__.png"
-      - type: rewrite
-        source: "/**/*.xml"
-        destination: "/__asset_not_found__.png"
-      - type: rewrite
-        source: "/**/*.svg"
-        destination: "/__asset_not_found__.png"
-      - type: rewrite
-        source: "/**/*.webp"
-        destination: "/__asset_not_found__.png"
-      - type: rewrite
-        source: "/**/*.avif"
+        source: "/**/*.gif"
         destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/**/*.ico"
@@ -171,22 +165,31 @@ services:
         source: "/**/*.jpg"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/**/*.jpeg"
+        source: "/**/*.js"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/**/*.png"
+        source: "/**/*.json"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/**/*.gif"
+        source: "/**/*.map"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/**/*.zip"
+        source: "/**/*.mp4"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.svg"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.ttf"
+        destination: "/__asset_not_found__.png"
+      - type: rewrite
+        source: "/**/*.txt"
         destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/**/*.webm"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/**/*.mp4"
+        source: "/**/*.webp"
         destination: "/__asset_not_found__.png"
       - type: rewrite
         source: "/**/*.woff"
@@ -195,22 +198,11 @@ services:
         source: "/**/*.woff2"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/**/*.ttf"
+        source: "/**/*.xml"
         destination: "/__asset_not_found__.png"
       - type: rewrite
-        source: "/**/*.eot"
+        source: "/**/*.zip"
         destination: "/__asset_not_found__.png"
-      - type: rewrite
-        source: "/**/*.html"
-        destination: "/__asset_not_found__.png"
-      - type: rewrite
-        source: "/**/*.htm"
-        destination: "/__asset_not_found__.png"
-      - type: rewrite
-        source: "/**/*.php"
-        destination: "/__asset_not_found__.png"
-      # Catch-all de la SPA: cualquier ruta de navegación válida
-      # (`/`, `/login`, `/:tenant`, `/:tenant/dashboard`, ...) sirve el shell.
       - type: rewrite
         source: "/*"
         destination: "/index.html"
@@ -228,6 +220,18 @@ services:
     # `frame-ancestors 'none'` + `X-Frame-Options: DENY` bloquean el clickjacking
     # sobre login/registro. `X-Frame-Options` se mantiene por compatibilidad con
     # navegadores antiguos.
+    #
+    # Stripe (https://docs.stripe.com/security/guide):
+    #   · script-src / frame-src → `https://*.js.stripe.com` permite que
+    #     Stripe.js arranque frames en orígenes distintos (lo recomienda la
+    #     propia documentación de Stripe).
+    #   · connect-src → `https://q.stripe.com` es el origen al que Stripe.js
+    #     hace XHR; sin él la consola del navegador bloquea la conexión.
+    #   · `hooks.stripe.com` es el frame del Payment Element y del challenge
+    #     3-D Secure. Con `redirect: 'if_required'` (ver payment.service.ts) el
+    #     challenge se renderiza dentro de la propia página de Stripe, así que
+    #     no hace falta `https://*.3dsecure.io`. Si algún día el 3DS se
+    #     embebiera en un modal propio, habría que añadirlo a frame-src.
     headers:
       - path: "/*"
         name: Content-Security-Policy
@@ -237,13 +241,13 @@ services:
           object-src 'none';
           frame-ancestors 'none';
           form-action 'self';
-          script-src 'self' https://js.stripe.com https://www.youtube.com https://s.ytimg.com;
+          script-src 'self' https://js.stripe.com https://*.js.stripe.com https://www.youtube.com https://s.ytimg.com;
           style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
           font-src 'self' https://fonts.gstatic.com data:;
           img-src 'self' data: blob: https:;
           media-src 'self' blob: https:;
-          connect-src 'self' https://boda-backend-4e6z.onrender.com https://api.stripe.com https://www.googleapis.com;
-          frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.youtube.com;
+          connect-src 'self' https://boda-backend-4e6z.onrender.com https://api.stripe.com https://q.stripe.com https://www.googleapis.com;
+          frame-src 'self' https://js.stripe.com https://*.js.stripe.com https://hooks.stripe.com https://www.youtube.com;
           worker-src 'self' blob:;
           manifest-src 'self';
           upgrade-insecure-requests

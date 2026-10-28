@@ -289,7 +289,12 @@ export interface AuthUser {
 
 export interface AuthLoginResponse {
   success: boolean;
-  token: string;
+  /**
+   * El token **solo** se devuelve a clientes que no son navegador (los que no
+   * envían `Origin`: apps móviles, CLI). El navegador web usa la cookie de
+   * sesión `httpOnly`, que el JavaScript no puede leer.
+   */
+  token?: string;
   user: AuthUser;
 }
 
@@ -329,7 +334,8 @@ export type AdminUserPatch = Partial<{
 
 export interface AuthRegisterResponse {
   success: boolean;
-  token: string;
+  /** Ver `AuthLoginResponse.token`: solo para clientes que no son navegador. */
+  token?: string;
   user: AuthUser;
 }
 

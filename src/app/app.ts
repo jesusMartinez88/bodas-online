@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { PwaPromptComponent } from './components/pwa-prompt/pwa-prompt.component';
 import { ExitConfirmModalComponent } from './shared/components/exit-confirm-modal/exit-confirm-modal.component';
 import { ExitConfirmService } from './services/exit-confirm.service';
+import { AuthService } from './services/auth.service';
 import { environment } from '../environments/environment';
 
 @Component({
@@ -21,9 +22,15 @@ import { environment } from '../environments/environment';
 export class App {
   exitConfirmService = inject(ExitConfirmService);
   private http = inject(HttpClient);
+  private authService = inject(AuthService);
 
   constructor() {
     afterNextRender(() => {
+      // Rehidratar la sesión: la cookie `httpOnly` la envía el navegador por
+      // su cuenta, así que el frontend tiene que preguntar al backend quién
+      // está conectado (el token ya no está en `localStorage`).
+      this.authService.ensureSession();
+
       // Registrar visita global: una sola llamada por sesión de navegador.
       // El header x-app-visit=1 distingue este ping de monitores externos.
       this.http

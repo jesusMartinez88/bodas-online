@@ -9,49 +9,45 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const platformId = inject(PLATFORM_ID);
 
-  // En SSR no hay localStorage → no hay token que añadir.
   const isBrowser = isPlatformBrowser(platformId);
-  const token = isBrowser ? localStorage.getItem('auth_token') : null;
 
   // Solo la API propia puede recibir credenciales.
   if (!isFirstPartyApiUrl(req.url)) {
     return next(req);
   }
 
-  let request = req;
-  if (token) {
-    request = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-  }
+  // La sesión viaja en una cookie `httpOnly` del backend: no hay ningún token
+  // que añadir a la cabecera. Lo único que hace falta es permitir que el
+  // navegador envíe la cookie (y solo a la API de casa).
+  const request = isBrowser ? req.clone({ withCredentials: true }) : req;
 
   return next(request).pipe(
     catchError((error: HttpErrorResponse) => {
       // Solo deslogueamos si:
       // - Estamos en el navegador,
-      // - Tenemos token,
-      // - El backend dice explícitamente que el token no es válido.
+      // - Teníamos sesión,
+      // - El backend dice explícitamente que la sesión no es válida.
       if (!isBrowser) {
         return throwError(() => error);
       }
-      const hasToken = !!localStorage.getItem('auth_token');
       const isLoginEndpoint = req.url.includes('/api/auth/login');
       const isRegisterEndpoint = req.url.includes('/api/auth/register');
+      const isLogoutEndpoint = req.url.includes('/api/auth/logout');
       const message = (error.error && (error.error.message || error.error.error)) || '';
-      const tokenError =
+      const sessionError =
         error.status === 401 &&
-        hasToken &&
+        authService.isAuthenticated() &&
         !isLoginEndpoint &&
         !isRegisterEndpoint &&
+        !isLogoutEndpoint &&
         (message.toLowerCase().includes('token') ||
           message.toLowerCase().includes('expired') ||
           message.toLowerCase().includes('invalid') ||
-          message.toLowerCase().includes('authorization'));
+          message.toLowerCase().includes('authorization') ||
+          message.toLowerCase().includes('authentication'));
 
-      if (tokenError) {
-        console.warn('Token invalid or expired. Logging out...');
+      if (sessionError) {
+        console.warn('Session invalid or expired. Logging out...');
         authService.logout();
       }
       return throwError(() => error);

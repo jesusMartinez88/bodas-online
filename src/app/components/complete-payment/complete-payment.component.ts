@@ -95,6 +95,11 @@ export class CompletePaymentComponent implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
+    // La sesión se rehidrata desde el backend (cookie `httpOnly`): sin esto,
+    // al recargar la página `currentUser()` todavía sería null y un usuario
+    // que ya ha pagado vería el formulario de pago en vez de su dashboard.
+    await this.authService.ensureSession();
+
     // Si el usuario ya tiene `paidAt` cuando llega aquí (admin lo
     // marcó manualmente, sesión con token viejo + login posterior),
     // salimos al dashboard sin pintar el formulario.

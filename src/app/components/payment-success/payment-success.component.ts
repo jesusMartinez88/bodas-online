@@ -73,10 +73,15 @@ export class PaymentSuccessComponent implements OnInit {
       return;
     }
 
+    // La sesión vive en una cookie `httpOnly`: al llegar aquí (por ejemplo
+    // tras un refresh) el frontend puede no tener aún el usuario en memoria.
+    // Sin esta espera, mostraríamos un "tu sesión expiró" falso.
+    await this.authService.ensureSession();
+
     const user = this.authService.currentUser();
     if (!user) {
       // Sin sesión no podemos reconciliar el pago. authGuard ya
-      // debería haber prevenido esto, pero por si el token expiró
+      // debería haber prevenido esto, pero por si la sesión expiró
       // justo después de pagar, mandamos al login con un mensaje.
       this.errorMessage.set(
         'Tu sesión expiró durante el pago. Inicia sesión de nuevo y el pago debería seguir activo.',

@@ -125,8 +125,9 @@ export class LoginComponent {
         this.pwaService.onUserLoggedIn();
 
         // Decidir destino según rol: admin va al panel, el resto a su dashboard.
-        // AuthService.persistToken() ya actualizó currentUserSignal antes de
-        // que el subscribe.next se disparase (tap corre antes que next).
+        // El `tap` de AuthService.login() ya actualizó la signal del usuario
+        // antes de que el subscribe.next se disparase (tap corre antes que
+        // next). La cookie de sesión la ha puesto el backend.
         const user = this.authService.currentUser();
         const isAdmin = user?.role === 'admin';
         const slug = user?.slug || formValue.username;

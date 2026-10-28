@@ -13,6 +13,18 @@ import type { NextFunction, Request, Response } from 'express';
  * Stripe (script/connect/frame), Google Fonts (style/font), YouTube
  * (script/frame/connect/img), el backend propio (connect) y los tiles de
  * OpenStreetMap vía `img-src https:`.
+ *
+ * Stripe (https://docs.stripe.com/security/guide):
+ *   · `https://*.js.stripe.com` en script-src y frame-src permite que
+ *     Stripe.js arranque frames en orígenes distintos (lo recomienda la
+ *     propia documentación de Stripe).
+ *   · `https://q.stripe.com` en connect-src es el origen al que Stripe.js
+ *     hace XHR; sin él el navegador bloquea la conexión.
+ *   · `hooks.stripe.com` es el frame del Payment Element y del challenge
+ *     3-D Secure. Con `redirect: 'if_required'` (ver payment.service.ts) el
+ *     challenge se renderiza dentro de la propia página de Stripe, así que
+ *     no hace falta `https://*.3dsecure.io`. Si algún día el 3DS se
+ *     embebiera en un modal propio, habría que añadirlo a frame-src.
  */
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
@@ -20,13 +32,13 @@ const CONTENT_SECURITY_POLICY = [
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  "script-src 'self' https://js.stripe.com https://www.youtube.com https://s.ytimg.com",
+  "script-src 'self' https://js.stripe.com https://*.js.stripe.com https://www.youtube.com https://s.ytimg.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",
   "media-src 'self' blob: https:",
-  "connect-src 'self' https://boda-backend-4e6z.onrender.com https://api.stripe.com https://www.googleapis.com",
-  "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.youtube.com",
+  "connect-src 'self' https://boda-backend-4e6z.onrender.com https://api.stripe.com https://q.stripe.com https://www.googleapis.com",
+  "frame-src 'self' https://js.stripe.com https://*.js.stripe.com https://hooks.stripe.com https://www.youtube.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   'upgrade-insecure-requests',

@@ -2,9 +2,16 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from './auth.service';
 
-export const authGuard: CanActivateFn = () => {
+/**
+ * La sesión vive en una cookie `httpOnly`: al recargar la página el frontend
+ * no puede saber si hay sesión hasta que se lo pregunta al backend. Por eso
+ * los guards son asíncronos y esperan a `ensureSession()` antes de decidir.
+ */
+export const authGuard: CanActivateFn = async () => {
   const authService = inject(AuthService);
   const router = inject(Router);
+
+  await authService.ensureSession();
 
   if (authService.isAuthenticated()) {
     return true;
@@ -29,9 +36,11 @@ export const authGuard: CanActivateFn = () => {
  * exitoso (ver `AuthService.markAsPaid`). El webhook sigue siendo
  * la fuente de verdad para el backend.
  */
-export const paymentGuard: CanActivateFn = () => {
+export const paymentGuard: CanActivateFn = async () => {
   const authService = inject(AuthService);
   const router = inject(Router);
+
+  await authService.ensureSession();
 
   if (!authService.isAuthenticated()) {
     router.navigate(['/login']);
@@ -58,9 +67,11 @@ export const paymentGuard: CanActivateFn = () => {
  * (el canActivate se evalúa en orden y todos deben pasar). Si el usuario
  * está autenticado pero NO es admin, lo mandamos a su dashboard.
  */
-export const adminGuard: CanActivateFn = () => {
+export const adminGuard: CanActivateFn = async () => {
   const authService = inject(AuthService);
   const router = inject(Router);
+
+  await authService.ensureSession();
 
   if (!authService.isAuthenticated()) {
     router.navigate(['/login']);

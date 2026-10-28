@@ -2,7 +2,7 @@ import { Injectable, signal, inject, PLATFORM_ID, computed } from '@angular/core
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
-import { catchError, of, tap, Observable } from 'rxjs';
+import { catchError, firstValueFrom, of, tap, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   AuthLoginRequest,
@@ -11,8 +11,6 @@ import {
   AuthRegisterResponse,
   CheckUsernameResponse,
 } from '../../types/api';
-
-const AUTH_TOKEN_KEY = 'auth_token';
 
 export interface CurrentUser {
   id: number;
@@ -30,42 +28,19 @@ export interface CurrentUser {
 }
 
 /**
- * Decodifica el payload de un JWT SIN verificar la firma.
- * Se usa solo para extraer info de UI (role, slug). El backend
- * sigue siendo la fuente de verdad en cada request protegida.
+ * Normaliza la respuesta del backend al tipo `CurrentUser` de la app.
  */
-const decodeJwtPayload = (token: string): Record<string, unknown> | null => {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = parts[1];
-    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const padded = normalized.padEnd(
-      normalized.length + ((4 - (normalized.length % 4)) % 4),
-      '=',
-    );
-    const json = atob(padded);
-    return JSON.parse(json) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-};
-
-const userFromToken = (token: string | null): CurrentUser | null => {
-  if (!token) return null;
-  const payload = decodeJwtPayload(token);
-  if (!payload) return null;
-  const id = Number(payload['id']);
-  if (!Number.isFinite(id)) return null;
+const toCurrentUser = (
+  user: Partial<CurrentUser> | null | undefined,
+): CurrentUser | null => {
+  if (!user || !Number.isFinite(Number(user.id))) return null;
   return {
-    id,
-    username: String(payload['username'] ?? ''),
-    email: (payload['email'] as string | null) ?? null,
-    role: String(payload['role'] ?? 'user'),
-    slug: String(payload['slug'] ?? ''),
-    // `paidAt` puede no estar en tokens emitidos antes del cambio;
-    // lo tratamos como `null` en ese caso (no pagado todavía).
-    paidAt: (payload['paidAt'] as string | null) ?? null,
+    id: Number(user.id),
+    username: user.username ?? '',
+    email: user.email ?? null,
+    role: user.role ?? 'user',
+    slug: user.slug ?? '',
+    paidAt: user.paidAt ?? null,
   };
 };
 
@@ -78,12 +53,20 @@ export class AuthService {
   private baseUrl = environment.apiBaseUrl;
   private platformId = inject(PLATFORM_ID);
 
-  // En SSR no hay localStorage → el usuario se considera no autenticado.
-  // En cliente se lee el token persistido.
-  private tokenSignal = signal<string | null>(this.readToken());
-  private currentUserSignal = signal<CurrentUser | null>(this.userFromPersistedToken());
+  /**
+   * La sesión vive en una cookie `httpOnly` del backend: el JavaScript de la
+   * página **no** puede leerla. Por eso aquí no hay ningún token en memoria ni
+   * en `localStorage`: solo el estado del usuario, que se pide al backend.
+   */
+  private currentUserSignal = signal<CurrentUser | null>(null);
 
-  isAuthenticated = computed(() => !!this.tokenSignal());
+  /** ¿Ya se ha consultado al backend si hay sesión abierta? */
+  private sessionResolved = signal(false);
+
+  /** Promesa en curso de rehidratación, para no duplicar la llamada. */
+  private sessionPromise: Promise<void> | null = null;
+
+  isAuthenticated = computed(() => !!this.currentUserSignal());
   currentUser = this.currentUserSignal.asReadonly();
   isAdmin = computed(() => this.currentUserSignal()?.role === 'admin');
 
@@ -92,9 +75,10 @@ export class AuthService {
       .post<AuthLoginResponse>(`${this.baseUrl}/api/auth/login`, credentials)
       .pipe(
         tap((response) => {
-          if (response?.token && isPlatformBrowser(this.platformId)) {
-            this.persistToken(response.token);
-          }
+          // La cookie de sesión ya la ha puesto el backend. Aquí solo se
+          // refleja el usuario en el estado de la app.
+          this.currentUserSignal.set(toCurrentUser(response?.user));
+          this.sessionResolved.set(true);
         }),
         catchError((err) => {
           console.error('[auth] login error:', err);
@@ -108,15 +92,56 @@ export class AuthService {
       .post<AuthRegisterResponse>(`${this.baseUrl}/api/auth/register`, payload)
       .pipe(
         tap((response) => {
-          if (response?.token && isPlatformBrowser(this.platformId)) {
-            this.persistToken(response.token);
-          }
+          this.currentUserSignal.set(toCurrentUser(response?.user));
+          this.sessionResolved.set(true);
         }),
         catchError((err) => {
           console.error('[auth] register error:', err);
           throw err;
         }),
       );
+  }
+
+  /**
+   * Consulta al backend si hay una sesión abierta (la cookie `httpOnly`).
+   *
+   * Es lo que sustituye a la rehidratación desde `localStorage`: al recargar
+   * la página el navegador manda la cookie solo, así que el frontend tiene que
+   * preguntar a `/api/auth/me` para saber con quién está.
+   *
+   * En SSR no hay cookie: se resuelve como "sin sesión" sin llamar al
+   * backend.
+   */
+  ensureSession(): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      this.sessionResolved.set(true);
+      return Promise.resolve();
+    }
+    if (this.sessionPromise) return this.sessionPromise;
+
+    this.sessionPromise = firstValueFrom(
+      this.http
+        .get<{ success: boolean; user?: CurrentUser }>(`${this.baseUrl}/api/auth/me`)
+        .pipe(
+          tap((response) => {
+            this.currentUserSignal.set(toCurrentUser(response?.user));
+            this.sessionResolved.set(true);
+          }),
+          catchError(() => {
+            // 401 = no hay cookie válida: es el estado normal de un visitante
+            // que no ha iniciado sesión, no un error.
+            this.currentUserSignal.set(null);
+            this.sessionResolved.set(true);
+            return of(null);
+          }),
+        ),
+    )
+      .then(() => undefined)
+      .finally(() => {
+        this.sessionPromise = null;
+      });
+
+    return this.sessionPromise;
   }
 
   /**
@@ -249,19 +274,45 @@ export class AuthService {
     );
   }
 
+  /**
+   * Cierra la sesión.
+   *
+   * Se avisa al backend para que borre la cookie `httpOnly` (si no, el
+   * navegador la seguiría mandando). Es best-effort: aunque la llamada falle,
+   * la sesión local se limpia igualmente.
+   */
   logout() {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem(AUTH_TOKEN_KEY);
-    }
-    this.tokenSignal.set(null);
     this.currentUserSignal.set(null);
+    this.sessionResolved.set(true);
+
+    if (isPlatformBrowser(this.platformId)) {
+      this.http
+        .post<{ success: boolean }>(`${this.baseUrl}/api/auth/logout`, {})
+        .pipe(catchError(() => of({ success: false })))
+        .subscribe(() => undefined);
+    }
+
     this.router.navigate(['/login']);
   }
 
-  /** Llamado por el interceptor o por el panel admin para refrescar el user. */
+  /**
+   * Refresca los datos del usuario desde el backend (email, `paidAt`, rol).
+   * Es la fuente de verdad: la cookie solo lleva el JWT.
+   */
   refreshCurrentUser() {
-    this.tokenSignal.set(this.readToken());
-    this.currentUserSignal.set(this.userFromPersistedToken());
+    if (!isPlatformBrowser(this.platformId)) return;
+    this.http
+      .get<{ success: boolean; user?: CurrentUser }>(`${this.baseUrl}/api/auth/me`)
+      .pipe(
+        tap((response) => {
+          this.currentUserSignal.set(toCurrentUser(response?.user));
+        }),
+        catchError(() => {
+          this.currentUserSignal.set(null);
+          return of(null);
+        }),
+      )
+      .subscribe(() => undefined);
   }
 
   /**
@@ -278,20 +329,5 @@ export class AuthService {
     const current = this.currentUserSignal();
     if (!current) return;
     this.currentUserSignal.set({ ...current, paidAt: paidAtIso });
-  }
-
-  private readToken(): string | null {
-    if (!isPlatformBrowser(this.platformId)) return null;
-    return localStorage.getItem(AUTH_TOKEN_KEY);
-  }
-
-  private userFromPersistedToken(): CurrentUser | null {
-    return userFromToken(this.readToken());
-  }
-
-  private persistToken(token: string) {
-    localStorage.setItem(AUTH_TOKEN_KEY, token);
-    this.tokenSignal.set(token);
-    this.currentUserSignal.set(userFromToken(token));
   }
 }

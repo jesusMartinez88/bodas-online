@@ -1,12 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   effect,
   ElementRef,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -245,6 +247,7 @@ export class RegisterComponent {
   private invitationMediaService = inject(InvitationMediaService);
   private paymentService = inject(PaymentService);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   /**
    * Paso 1 → 2. Valida los datos básicos y consulta si el username
@@ -455,6 +458,35 @@ export class RegisterComponent {
       this.processing.set(false);
       console.error('[register] register error:', err);
       const httpErr = err as HttpErrorResponse;
+
+      // 409 = el backend detectó un conflicto (username ya en uso). El backend
+      // responde con un mensaje genérico para no confirmar la existencia de la
+      // cuenta, así que re-consultamos `check-username` (limitado y con
+      // latencia constante) para poder dar un feedback concreto al usuario.
+      if (httpErr?.status === 409) {
+        this.errorMessage.set(
+          'No pudimos crear tu boda. Revisa los datos e inténtalo de nuevo.',
+        );
+        this.authService
+          .checkUsername(this.formData.username)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: (response) => {
+              if (response?.available) {
+                return;
+              }
+              this.errorMessage.set(
+                'Ese nombre de usuario ya está en uso. Prueba con otro.',
+              );
+              this.usernameStatus.set('unavailable');
+              this.usernameMessage.set(
+                'Este nombre de usuario no está disponible. Prueba con otro.',
+              );
+            },
+          });
+        return;
+      }
+
       const backendMessage =
         (httpErr?.error && (httpErr.error.message || httpErr.error.error)) || '';
       this.errorMessage.set(
