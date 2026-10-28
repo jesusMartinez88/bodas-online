@@ -349,7 +349,7 @@ cabeceras y no se pueden cerrar desde el dashboard de Render.
 |---|---|---|---|
 | 1 | ~~**BOLA / IDOR por tenant**~~ — **cerrado**: los recursos ya filtraban por `userId`; lo que fallaba era el código de borrado masivo compartido. Ver §5 | — | `src/services/deleteCodeService.js`, `test/tenant-isolation.integration.test.js` |
 | 2 | ~~**JWT en `localStorage`**~~ — **cerrado**: la sesión viaja en una cookie `httpOnly`; el token ya no se guarda en el navegador ni se devuelve al navegador. Ver §8 | — | `src/services/sessionCookie.js`, `src/app/services/auth.service.ts` |
-| 3 | **Verificación de firma del webhook de Stripe** | Alto | `src/controllers/paymentController.js` |
+| 3 | ~~**Verificación de firma del webhook de Stripe**~~ — **cerrado**: la verificación de firma ya existía (`constructEvent` sobre el cuerpo crudo); lo que faltaba era la **idempotencia** (cada reintento de Stripe reenviaba el email de pago), el **500 en los fallos de procesamiento** y las **pruebas**. Ver §11 | — | `src/models/webhookEvent.js`, `src/controllers/paymentController.js`, `test/stripe-webhook.integration.test.js` |
 | 4 | **Reset de contraseña por código** — comprobar expiración, uso único y rate limit | Medio | `src/controllers/authController.js` |
 | 5 | ~~**Subida de archivos**~~ — **cerrado**: el contenido ya se validaba con `sharp`/magic bytes; lo que faltaba era el filtro de MIME, el rollback atómico y los status correctos. Ver §7.1 | — | `src/middleware/uploadPolicy.js`, `test/upload-security.integration.test.js` |
 | 6 | ~~**Enumeración en registro**~~ — **cerrado**: el mensaje ya no confirma el conflicto y la latencia es constante. Ver §7.2 | — | `src/controllers/authController.js`, `test/register-enumeration.integration.test.js` |
@@ -642,6 +642,9 @@ cd bodas-online-backend
 # Suite de aislamiento: dos tenants reales, JWT de A contra recursos de B
 node --test test/tenant-isolation.integration.test.js
 
+# Suite del webhook de Stripe: firma, idempotencia y reintentos
+node --test test/stripe-webhook.integration.test.js
+
 # El resto de la suite, fichero a fichero
 # (settings.integration.test.js se cuelga: fallo preexistente, sin relación)
 node --test test/auth-validation.test.js
@@ -667,3 +670,152 @@ npx ajv-cli -s https://render.com/schema/render.yaml.json -d render.yaml --spec=
 > routing que ya existían y **no** están en el YAML. Revisa las pantallas
 > *Headers* y *Redirects/Rewrites* después de aplicar, y borra cualquier
 > regla huérfana.
+
+---
+
+## 11. Webhook de Stripe: firma, idempotencia y reintentos
+
+> Cerrado en octubre de 2026. Afecta al **backend** (`bodas-online-backend`).
+
+### 11.1 Qué había y qué faltaba
+
+Al auditar el hallazgo, la **verificación de firma ya estaba implementada**
+desde el commit `b86f928` ("feature: pay stripe and send email for new
+users"). El endpoint hacía:
+
+```js
+event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
+// 400 si la firma no valida · 500 si falta STRIPE_WEBHOOK_SECRET
+```
+
+Y el cuerpo crudo llega intacto porque `app.js` captura el buffer en el
+`verify` del parser de JSON global:
+
+```js
+app.use(express.json({
+  limit: "10mb",
+  verify: (req, _res, buf) => { req.rawBody = buf; },
+}));
+```
+
+Lo que **faltaba** eran las tres cosas que Hacen que un webhook sea fiable:
+
+| # | Hueco | Consecuencia real |
+|---|---|---|
+| 1 | **Ninguna prueba** de la verificación de firma | Un cambio de una línea en el middleware de JSON (por ejemplo, añadir `express.text()` delante) habría roto el webhook **sin que ninguna prueba se enterara** |
+| 2 | **Sin idempotencia** | Stripe reintenta la entrega hasta 3 días después, y el panel permite reenviar eventos a mano. Cada reintento reprocesaba el evento y **reenviaba el email de "pago recibido"** al cliente |
+| 3 | **El `catch` devolvía `200`** | Si el procesamiento fallaba (error de BD, usuario inexistente…), el backend respondía `200` y el pago se perdía **en silencio**: Stripe no reintentaba porque la entrega fue "correcta" |
+
+### 11.2 Idempotencia: la tabla `webhook_events`
+
+Nueva tabla en el backend (`src/db.js`):
+
+```sql
+CREATE TABLE IF NOT EXISTS webhook_events (
+  eventId   TEXT PRIMARY KEY,   -- id único e inmutable del evento (evt_...)
+  type      TEXT NOT NULL,
+  status    TEXT NOT NULL DEFAULT 'processing',  -- processing | processed
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+```
+
+El modelo (`src/models/webhookEvent.js`) hace el reclamo con un `INSERT OR
+IGNORE`, que es la operación atómica que decide qué worker procesa el evento:
+
+| Situación | Resultado | Respuesta HTTP |
+|---|---|---|
+| Evento nuevo | `claimed: true` (reason `new`) | se procesa → `200` |
+| Evento ya procesado | `claimed: false` (reason `duplicate`) | `200 {"received":true,"duplicate":true}` |
+| Evento en curso en otro worker | `claimed: false` (reason `in-flight`) | `200 {"received":true,"duplicate":true}` |
+| Claim huérfano (> 10 min, el proceso murió) | `claimed: true` (reason `takeover`) | se reprocesa → `200` |
+
+El `duplicate: true` es **intencional**: un `4xx` haría que Stripe reintentara
+un evento que ya está correctamente procesado, y un `5xx` parece un fallo
+nuestro cuando en realidad es una entrega repetida. Stripe solo necesita un
+`2xx` para dar el evento por entregado.
+
+### 11.3 Los fallos de procesamiento devuelven 500
+
+Antes el `catch` exterior terminaba con `res.json({ received: true })`. Ahora:
+
+1. Se **libera el claim** (se borra la fila) para que el reintento pueda
+   procesar el evento desde cero. Si el claim se conservara, el reintento de
+   Stripe vería el evento como "ya reclamado" y **el pago se perdería**.
+2. Se responde `500` con `{"received": false}`, que es la señal que hace que
+   Stripe reintente la entrega.
+
+Con la idempotencia activa, reintentar es seguro: el email no se duplica
+porque el evento solo se procesa una vez.
+
+> El email de "pago recibido" se envía *dentro* de su propio `try/catch`
+> (fire-and-forget): si Resend falla, el pago **no** se reintenta. Es lo
+> correcto — el pago ya está registrado y confirmado; reenviar el email por
+> un fallo del proveedor de correo sí generaría duplicados.
+
+### 11.4 Cobertura de pruebas
+
+`bodas-online-backend/test/stripe-webhook.integration.test.js` — **9 pruebas**
+que firman payloads reales con `stripe.webhooks.generateTestHeaderString`:
+
+| Prueba | Qué comprueba |
+|---|---|
+| Firma válida | `200`, el usuario queda marcado como pagado y el evento queda `processed` |
+| Firma inválida (secret ajeno) | `400` y el pago **no** se marca; el evento no se registra |
+| Sin cabecera `stripe-signature` | `400` |
+| Cuerpo alterado después de firmarlo | `400` (la firma cubre los bytes exactos) |
+| Sin `STRIPE_WEBHOOK_SECRET` | `500` y el evento no se acepta |
+| Entrega duplicada | La segunda responde `duplicate: true` y **no** vuelve a tocar el pago (se comprueba con un valor centinela en `paidAt`) |
+| Fallo de procesamiento | `500` y el claim se libera (la fila desaparece) |
+| Reintento tras el fallo | El mismo `eventId` con payload válido **sí** se procesa → el pago se marca |
+| Evento con otro id | Se procesa con normalidad (no es un duplicado) |
+
+Las pruebas se validaron por **mutación**: desactivando el reclamo, la prueba
+del duplicado falla; degradando el `500` a `200`, falla la del fallo de
+procesamiento.
+
+```bash
+cd bodas-online-backend
+node --test test/stripe-webhook.integration.test.js
+```
+
+### 11.5 Configuración manual (obligatoria, solo la puede hacer el titular)
+
+El código está listo, pero **mientras no se configure esto en el panel de
+Stripe, los pagos no se activan solos**:
+
+1. En <https://dashboard.stripe.com/webhooks> → *Add endpoint*:
+   - **URL**: `https://boda-backend-4e6z.onrender.com/api/payments/webhook`
+   - **Events**: `payment_intent.succeeded`, `payment_intent.processing`,
+     `payment_intent.payment_failed`, `payment_intent.canceled`
+   - **Signing secret**: el `whsec_…` que genera Stripe.
+2. En el panel de Render del backend, definir la variable de entorno
+   `STRIPE_WEBHOOK_SECRET` con ese `whsec_…` y **redespiar**. El `.env`
+   local **no** es el de Render: sin esta variable el webhook responde `500`
+   a propósito (no se acepta ningún evento sin secreto configurado).
+3. Comprobar en el panel de Stripe que las entregas llegan con `200` y que
+   aparecen en *Event deliveries*.
+
+### 11.6 Probarlo en local con la CLI de Stripe
+
+```bash
+# 1. Arrancar el backend con STRIPE_WEBHOOK_SECRET=<el whsec_ del endpoint local>
+node src/index.js
+
+# 2. En otra terminal, reenviar eventos al backend local
+stripe listen --forward-to localhost:3000/api/payments/webhook
+stripe trigger payment_intent.succeeded
+```
+
+La CLI imprime su propio `whsec_…` (distinto del de producción): ese es el
+que debe estar en `STRIPE_WEBHOOK_SECRET` mientras se prueba en local.
+
+### 11.7 Lo que queda fuera del alcance
+
+- La tabla `webhook_events` crece un evento por pago. El modelo trae
+  `purgeOldEvents(days = 30)` para borrarlos, pero **no se llama automáticamente**:
+  con el volumen actual (un evento por pago) el crecimiento es irrelevante y
+  prefiero no añadir un job programado que pueda fallar en silencio.
+- El endpoint responde `503` si Stripe está deshabilitado (`STRIPE_SECRET_KEY`
+  ausente). Es el comportamiento correcto para un despliegue sin pagos.
+
