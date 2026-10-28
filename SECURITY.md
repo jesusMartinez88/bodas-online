@@ -543,7 +543,7 @@ no puede leer:
 
 | Pieza | Fichero | Qué hace |
 |---|---|---|
-| Cookie de sesión | `src/services/sessionCookie.js` | `tb_session` = el JWT, con `httpOnly`, `secure` (en producción), `sameSite=lax`, `path=/`, 24 h |
+| Cookie de sesión | `src/services/sessionCookie.js` | `tb_session` = el JWT, con `httpOnly`, `secure` (obligatorio con `SameSite=None`), `sameSite=none`, `path=/`, 24 h |
 | Lectura de la cookie | `src/middleware/auth.js` | `authenticateJWT` acepta la cookie **o** la cabecera `Bearer` (esta última para clientes no navegador) |
 | Parser de cookies | `src/middleware/cookies.js` | Parser mínimo propio (la API solo lee su propia cookie; no hace falta `cookie-parser`) |
 | Cierre de sesión | `POST /api/auth/logout` | Borra la cookie |
@@ -560,23 +560,29 @@ puede copiar un token de larga duración reutilizable fuera del navegador.
 ### 8.2 Por qué no hace falta un token CSRF (y qué lo cubre)
 
 Una cookie que se envía automáticamente **sí** es susceptible de CSRF, a
-diferencia de una cabecera `Authorization`. Aquí la cobertura es doble:
+diferencia de una cabecera `Authorization`. Aquí la cobertura es:
 
-1. **`SameSite=Lax`.** El frontend (`tubodaonline.onrender.com`) y el backend
-   (`boda-backend-4e6z.onrender.com`) comparten sitio: su dominio registrable
-   es `onrender.com`, así que la cookie viaja en las peticiones XHR
-   cross-origin pero **no** en las peticiones cross-site de otro sitio. Es lo
-   que el navegador confirma con `sec-fetch-site: same-site`.
-2. **Verificación de `Origin`** (`src/middleware/csrf.js`): las peticiones que
+1. **Verificación de `Origin`** (`src/middleware/csrf.js`): las peticiones que
    mutan estado (POST/PUT/PATCH/DELETE) deben venir de un origen permitido.
    Los navegadores **siempre** mandan `Origin` en esas peticiones; las que no
    lo llevan (CLI, app móvil, webhook de Stripe) se permiten, porque en ese
    caso no hay cookie de sesión implicada.
+2. **`SameSite=None`** — y aquí está la trampa: **`onrender.com` está en la
+   Public Suffix List** (igual que `vercel.app`, `herokuapp.com`, `pages.dev`
+   o `netlify.app`). Eso significa que `tubodaonline.onrender.com` y
+   `boda-backend-4e6z.onrender.com` son **sitios distintos** para el
+   navegador, no un mismo sitio con dos subdominios. Chrome lo confirma con
+   `sec-fetch-site: cross-site` en las peticiones entre ambos.
 
-> **Si el frontend pasa a un dominio propio**, `SameSite=Lax` dejaría de
-> funcionar (los sitios serían distintos) y la cookie tendría que ir en
-> `SameSite=None`. En ese caso la verificación de `Origin` es la que protege
-> y hay que poner `COOKIE_SAME_SITE=none` en el entorno del backend.
+   Con `SameSite=Lax` el navegador **guarda** la cookie pero **no la envía** en
+   las XHR cross-site: la sesión se quedaba guardada en el panel de
+   DevTools y, aun así, `GET /api/auth/me` respondía 401 y la app cerraba la
+   sesión en cada arranque. Por eso la cookie va en `SameSite=None` (que exige
+   `Secure`) y la protección real la aporta el punto 1.
+
+> Si el frontend pasa a un dominio propio **compartido** con el backend (el
+> mismo registrable para ambos), el valor puede volver a `lax` y ese origen
+> conviene añadirlo a `ALLOWED_ORIGINS`.
 
 ### 8.3 Una sola allowlist de orígenes
 
@@ -600,12 +606,12 @@ Probado con Chrome contra el backend y el frontend en local:
 
 | Comprobación | Resultado |
 |---|---|
-| `Set-Cookie` del login | `tb_session=…; Max-Age=86400; Path=/; HttpOnly; SameSite=Lax` |
+| `Set-Cookie` del login | `tb_session=…; Max-Age=86400; Path=/; HttpOnly; Secure; SameSite=None` |
 | Cuerpo de la respuesta del login | **Sin token** (es una petición de navegador) |
 | `localStorage` tras login y tras recargar | **Vacío** |
 | `document.cookie` | La cookie de sesión **no** es visible (es `httpOnly`) |
 | Peticiones posteriores | Llevan `cookie: tb_session=…`, sin cabecera `Authorization` |
-| `sec-fetch-site` | `same-site` (la cookie cruza el origen sin problema) |
+| `sec-fetch-site` | `cross-site` (`onrender.com` es un sufijo público: los dos hosts son sitios distintos, y por eso la cookie va en `SameSite=None`) |
 | Rate limit | Las peticiones con cookie caen en el bucket autenticado (500/15 min) |
 | Recargar la página | La sesión persiste (rehidratación con `GET /api/auth/me`) |
 | Mutación con `Origin` ajeno | `403 Origin not allowed` |
