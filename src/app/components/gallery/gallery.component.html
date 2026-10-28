@@ -17,7 +17,7 @@
             <img
               [src]="photo.placeholder"
               [alt]="photo.title"
-              onerror="this.style.display = 'none'"
+              (error)="onImageError($event)"
             />
             <div class="photo-date">{{ photo.date }}</div>
           </div>

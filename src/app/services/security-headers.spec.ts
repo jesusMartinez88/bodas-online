@@ -86,6 +86,30 @@ describe('security headers policy', () => {
     expect(csp).toContain('https://api.stripe.com');
   });
 
+  it('blocks inline scripts and inline event handlers', () => {
+    const headers = new Map<string, string>();
+    const response = {
+      setHeader: (name: string, value: string) => headers.set(name, value),
+    } as unknown as Response;
+
+    securityHeaders({} as Request, response, vi.fn() as unknown as NextFunction);
+
+    const csp = headers.get('Content-Security-Policy') ?? '';
+    const directives = Object.fromEntries(
+      csp
+        .split(';')
+        .map((directive) => directive.trim().split(/\s+/))
+        .filter((parts) => parts.length > 0)
+        .map((parts) => [parts[0], parts.slice(1)]),
+    );
+
+    // Sin `'unsafe-inline'` los `<script>` inline del HTML quedan bloqueados:
+    // por eso el build no puede emitir el script de critical CSS (Beasties).
+    expect(directives['script-src']).not.toContain("'unsafe-inline'");
+    // `script-src-attr 'none'` bloquea los handlers en atributos (`onerror=…`).
+    expect(directives['script-src-attr']).toEqual(["'none'"]);
+  });
+
   it('does not open the policy to any origin', () => {
     const headers = new Map<string, string>();
     const response = {

@@ -155,4 +155,17 @@ export class GalleryComponent implements AfterViewInit, OnDestroy {
   closeModal() {
     this.selectedPhoto.set(null);
   }
+
+  /**
+   * Oculta la foto cuando su imagen no se puede cargar.
+   *
+   * Antes se resolvía con `onerror="this.style.display = 'none'"` en la
+   * plantilla, pero la CSP del frontend (`script-src 'self'` sin
+   * `'unsafe-inline'`) bloquea los handlers inline en atributos: el fallback
+   * nunca llegaba a ejecutarse y se veía el icono de imagen rota. Con un
+   * binding de Angular no hay ningún script inline en el HTML.
+   */
+  onImageError(event: Event): void {
+    (event.target as HTMLImageElement).style.display = 'none';
+  }
 }

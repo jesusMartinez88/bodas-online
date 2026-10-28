@@ -14,6 +14,20 @@ import type { NextFunction, Request, Response } from 'express';
  * (script/frame/connect/img), el backend propio (connect) y los tiles de
  * OpenStreetMap vía `img-src https:`.
  *
+ * `script-src` va SIN `'unsafe-inline'` y `script-src-attr` va en `'none'`,
+ * así que ni los scripts inline ni los handlers en atributos (`onclick=…`,
+ * `onerror=…`) se ejecutan. Dos consecuencias que el build DEBE respetar:
+ *
+ *   1. `optimization.styles.inlineCritical` tiene que seguir en `false` en
+ *      `angular.json`. Con el inlining de CSS crítico activo, Beasties emite
+ *      un `<script>` inline que es el que activa (`media="all"`) la hoja de
+ *      estilos global diferida. La CSP lo bloqueaba y el CSS global (leaflet,
+ *      drag & drop de CDK, utilidades de Tailwind) no se aplicaba NUNCA: el
+ *      mapa salía roto. Sin critical CSS no hay script inline y la CSP
+ *      puede seguir siendo estricta.
+ *   2. Los handlers en atributos se expresan con bindings de Angular
+ *      (`(error)="…"`), nunca con `onerror="…"` en la plantilla.
+ *
  * Stripe (https://docs.stripe.com/security/guide):
  *   · `https://*.js.stripe.com` en script-src y frame-src permite que
  *     Stripe.js arranque frames en orígenes distintos (lo recomienda la
@@ -33,6 +47,7 @@ const CONTENT_SECURITY_POLICY = [
   "frame-ancestors 'none'",
   "form-action 'self'",
   "script-src 'self' https://js.stripe.com https://*.js.stripe.com https://www.youtube.com https://s.ytimg.com",
+  "script-src-attr 'none'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",
