@@ -1,5 +1,5 @@
 import { Injectable, signal, inject, PLATFORM_ID, computed } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
 import { catchError, firstValueFrom, of, tap, Observable } from 'rxjs';
@@ -62,6 +62,18 @@ export class AuthService {
 
   /** ¿Ya se ha consultado al backend si hay sesión abierta? */
   private sessionResolved = signal(false);
+
+  /**
+   * Motivo por el que **no** se pudo consultar la sesión al backend.
+   *
+   * `null` = el backend respondió: o hay sesión o no la hay, pero lo sabemos.
+   * Un texto = el backend no pudo responder (dormido en Render, 5xx, sin red):
+   * **no sabemos** si hay sesión, y eso no es lo mismo que "sin sesión".
+   *
+   * Sin esta distinción, un backend dormido echaba al usuario a `/login` como
+   * si su sesión hubiera caducado, cuando el problema era de conexión.
+   */
+  readonly sessionError = signal<string | null>(null);
 
   /** Promesa en curso de rehidratación, para no duplicar la llamada. */
   private sessionPromise: Promise<void> | null = null;
@@ -126,11 +138,23 @@ export class AuthService {
           tap((response) => {
             this.currentUserSignal.set(toCurrentUser(response?.user));
             this.sessionResolved.set(true);
+            this.sessionError.set(null);
           }),
-          catchError(() => {
-            // 401 = no hay cookie válida: es el estado normal de un visitante
-            // que no ha iniciado sesión, no un error.
-            this.currentUserSignal.set(null);
+          catchError((error: HttpErrorResponse) => {
+            if (error.status === 401) {
+              // 401 = no hay cookie válida: es el estado normal de un visitante
+              // que no ha iniciado sesión, no un error.
+              this.currentUserSignal.set(null);
+              this.sessionError.set(null);
+            } else {
+              // El backend no ha podido responder (dormido, 5xx, sin red): no
+              // sabemos si hay sesión. Se distingue de un 401 para no tratar un
+              // fallo de red como "sesión caducada".
+              this.currentUserSignal.set(null);
+              this.sessionError.set(
+                'No hemos podido conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.',
+              );
+            }
             this.sessionResolved.set(true);
             return of(null);
           }),
@@ -142,6 +166,18 @@ export class AuthService {
       });
 
     return this.sessionPromise;
+  }
+
+  /**
+   * Reintenta la consulta de sesión tras un fallo de conexión.
+   *
+   * `ensureSession()` libera su promesa cuando la petición termina (incluido
+   * el error), así que volver a llamarla hace una petición nueva de verdad.
+   * Si el backend vuelve a responder, `sessionError` se limpia sola.
+   */
+  async retrySession(): Promise<void> {
+    this.sessionError.set(null);
+    await this.ensureSession();
   }
 
   /**

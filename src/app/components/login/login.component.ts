@@ -1,11 +1,9 @@
 import { Component, inject, signal, effect, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { form, FormField, submit, required, minLength } from '@angular/forms/signals';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { PwaService } from '../../services/pwa.service';
-
-import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -17,6 +15,7 @@ import { RouterLink } from '@angular/router';
 export class LoginComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private pwaService = inject(PwaService);
   private platformId = inject(PLATFORM_ID);
 
@@ -40,6 +39,14 @@ export class LoginComponent {
   errorMessage = signal<string | null>(null);
   loadingMessage = signal<string>('');
 
+  /**
+   * El guard manda al login con `?error=conexion` cuando el backend no ha
+   * podido responder. No es un fallo de credenciales, es de conexión: se dice
+   * explícitamente y se ofrece reintentar.
+   */
+  readonly connectionError = signal(false);
+  readonly isRetrying = signal(false);
+
   // CAPTCHA properties
   captchaQuestion = signal('');
   private correctCaptchaAnswer = 0;
@@ -49,6 +56,10 @@ export class LoginComponent {
 
   constructor() {
     this.generateCaptcha();
+
+    if (this.route.snapshot.queryParamMap.get('error') === 'conexion') {
+      this.connectionError.set(true);
+    }
 
     // El `setInterval` solo se registra en el navegador. En SSR, registrar
     // un interval deja un timer colgando en el server que nunca se limpia.
@@ -92,6 +103,31 @@ export class LoginComponent {
 
     // Reset captcha field in form model
     this.loginModel.update((m) => ({ ...m, captcha: '' }));
+  }
+
+  /**
+   * Reintenta la consulta de sesión tras un fallo de conexión.
+   *
+   * Si el backend vuelve a responder y la sesión sigue viva, entra al panel
+   * sin pedir credenciales otra vez. Si responde pero no hay sesión, entonces
+   * sí que la sesión caducó de verdad y se quita el aviso de conexión.
+   */
+  async retryConnection(): Promise<void> {
+    this.isRetrying.set(true);
+    try {
+      await this.authService.retrySession();
+
+      const user = this.authService.currentUser();
+      if (user) {
+        const target = user.role === 'admin' ? ['/admin/users'] : [`/${user.slug}/dashboard`];
+        this.router.navigate(target, { replaceUrl: true });
+        return;
+      }
+
+      this.connectionError.set(false);
+    } finally {
+      this.isRetrying.set(false);
+    }
   }
 
   onSubmit() {

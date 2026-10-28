@@ -4,35 +4,34 @@ import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { securityHeaders } from './security-headers';
 
-/** Normaliza una cabecera CSP para poder compararla sin depender del orden. */
-const normalizeCsp = (csp: string): string =>
-  csp
-    .split(';')
-    .map((directive) => directive.trim().replace(/\s+/g, ' '))
-    .filter(Boolean)
-    .sort()
-    .join('; ');
-
 /**
- * Extrae el valor de la cabecera CSP declarada en `render.yaml`.
+ * Extrae el valor de una cabecera declarada en `render.yaml`.
  *
- * En el YAML la cabecera usa el bloque escalado `value: >-`, así que las
- * líneas se unen con espacios (bloque plegado). Se recogen todas las líneas
- * más indentadas que la de `value:`.
+ * En el YAML la cabecera puede usar el bloque escalado `value: >-` (las
+ * líneas se unen con espacios) o un valor en la misma línea
+ * (`value: "camera=(), ..."`). Se soportan las dos formas.
  */
-const extractCspFromRenderYaml = (yaml: string): string => {
+const extractHeaderFromRenderYaml = (yaml: string, headerName: string): string => {
   const lines = yaml.split(/\r?\n/);
-  const nameIndex = lines.findIndex((line) =>
-    line.trim() === 'name: Content-Security-Policy',
-  );
-  expect(nameIndex, 'render.yaml debe declarar la cabecera CSP').toBeGreaterThan(-1);
+  const nameIndex = lines.findIndex((line) => line.trim() === `name: ${headerName}`);
+  expect(nameIndex, `render.yaml debe declarar la cabecera ${headerName}`).toBeGreaterThan(-1);
 
   const valueIndex = lines.findIndex(
     (line, index) => index > nameIndex && line.includes('value:'),
   );
-  expect(valueIndex, 'render.yaml debe declarar el valor de la CSP').toBeGreaterThan(-1);
+  expect(valueIndex, `render.yaml debe declarar el valor de ${headerName}`).toBeGreaterThan(-1);
 
-  const baseIndent = lines[valueIndex].search(/\S/);
+  const valueLine = lines[valueIndex];
+  const inlineValue = valueLine.slice(valueLine.indexOf('value:') + 'value:'.length).trim();
+
+  // `value: >-` (o `|`, `>-2`…) es un escalar de bloque: su contenido son las
+  // líneas siguientes, más indentadas.
+  const isBlockScalar = /^[>|][-+]?\d*$/.test(inlineValue);
+  if (inlineValue && !isBlockScalar) {
+    return inlineValue.replace(/^["']|["']$/g, '');
+  }
+
+  const baseIndent = valueLine.search(/\S/);
   const collected: string[] = [];
   for (let index = valueIndex + 1; index < lines.length; index += 1) {
     const line = lines[index];
@@ -42,6 +41,15 @@ const extractCspFromRenderYaml = (yaml: string): string => {
   }
   return collected.join(' ');
 };
+
+/** Normaliza una cabecera CSP para poder compararla sin depender del orden. */
+const normalizeCsp = (csp: string): string =>
+  csp
+    .split(';')
+    .map((directive) => directive.trim().replace(/\s+/g, ' '))
+    .filter(Boolean)
+    .sort()
+    .join('; ');
 
 describe('security headers policy', () => {
   it('sets browser hardening headers on every response', () => {
@@ -142,11 +150,26 @@ describe('security headers policy', () => {
     securityHeaders({} as Request, response, vi.fn() as unknown as NextFunction);
 
     const yaml = readFileSync(resolve(process.cwd(), 'render.yaml'), 'utf8');
-    const yamlCsp = extractCspFromRenderYaml(yaml);
+    const yamlCsp = extractHeaderFromRenderYaml(yaml, 'Content-Security-Policy');
 
     expect(yamlCsp.length).toBeGreaterThan(0);
     expect(normalizeCsp(yamlCsp)).toBe(
       normalizeCsp(headers.get('Content-Security-Policy') ?? ''),
     );
+  });
+
+  it('keeps render.yaml in sync with the Permissions-Policy of the SSR server', () => {
+    const headers = new Map<string, string>();
+    const response = {
+      setHeader: (name: string, value: string) => headers.set(name, value),
+    } as unknown as Response;
+
+    securityHeaders({} as Request, response, vi.fn() as unknown as NextFunction);
+
+    const yaml = readFileSync(resolve(process.cwd(), 'render.yaml'), 'utf8');
+    const yamlPolicy = extractHeaderFromRenderYaml(yaml, 'Permissions-Policy');
+
+    expect(yamlPolicy.length).toBeGreaterThan(0);
+    expect(yamlPolicy).toBe(headers.get('Permissions-Policy') ?? '');
   });
 });

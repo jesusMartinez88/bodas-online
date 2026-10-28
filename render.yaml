@@ -269,17 +269,29 @@ services:
         name: Permissions-Policy
         value: "camera=(), microphone=(), geolocation=(), payment=(self), browsing-topics=()"
 
-      # #5 — 1 año, alineado con el backend. Sin `preload`: el dominio raíz es
-      # `onrender.com` y no lo controlamos; con `includeSubDomains` sobre un
-      # subdominio de Render el preload es inútil, y 10 años es una decisión
-      # que no podemos revertir si mañana necesitamos otro host.
+      # #5 — HSTS del frontend: 1 año, alineado con el backend. Sin `preload`:
+      # el dominio raíz es `onrender.com` y no lo controlamos; con
+      # `includeSubDomains` sobre un subdominio de Render el preload es inútil,
+      # y 10 años es una decisión que no podemos revertir si mañana necesitamos
+      # otro host.
       #
-      # IMPORTANTE: Render aplica por defecto `max-age=315360000; includeSubdomains;
-      # preload` (10 años) en los static sites. Esta regla debe SUSTITUIRLO, no
-      # acompañarlo: si se sirven las dos, el navegador se queda con la más
-      # restrictiva (10 años) y el hallazgo #5 sigue abierto.
-      # Verifica con `curl -I https://tubodaonline.onrender.com/` que sale
-      # UNA sola cabecera strict-transport-security con max-age=31536000.
+      # OJO — ESTA REGLA NO ESTÁ APLICADA HOY. Medido en producción el
+      # 2026-10-28, el Static Site de Render devuelve SU default:
+      #   strict-transport-security: max-age=315360000; includeSubdomains; preload
+      # (10 años) y la respuesta trae UNA sola cabecera HSTS. La regla de
+      # usuario con ese mismo nombre la ignora: no hay ningún knob en el
+      # dashboard ni en el Blueprint para desactivarlo. El análisis del
+      # riesgo está en `SECURITY.md` §3 (está acotado: `includeSubDomains`
+      # solo afecta a subdominios de `tubodaonline.onrender.com`, que no
+      # existen, y `preload` es un no-op porque `onrender.com` no está en la
+      # lista de preload de HSTS).
+      #
+      # La regla se queda aquí como la política que queremos: si Render algún
+      # día permite sobrescribir su default, basta con aplicarla y verificar
+      # que sale UNA sola cabecera con max-age=31536000.
+      #
+      # Verificación del estado real (debe devolver UNA sola línea):
+      #   curl -I https://tubodaonline.onrender.com/ | grep -i strict-transport
       - path: "/*"
         name: Strict-Transport-Security
         value: "max-age=31536000; includeSubDomains"

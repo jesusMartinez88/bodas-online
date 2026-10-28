@@ -70,6 +70,27 @@
         </div>
       }
 
+      @if (connectionError()) {
+        <div class="connection-error" role="alert">
+          <p>
+            No hemos podido conectar con el servidor. Puede que se esté despertando: el
+            servicio gratis de Render se duerme tras unos minutos sin actividad.
+          </p>
+          <button
+            type="button"
+            class="retry-btn"
+            (click)="retryConnection()"
+            [disabled]="isRetrying()"
+          >
+            @if (isRetrying()) {
+              <span class="loader"></span>
+            } @else {
+              <span>Reintentar</span>
+            }
+          </button>
+        </div>
+      }
+
       @if (loadingMessage()) {
         <div class="loading-message">
           <div class="loading-icon">⏳</div>

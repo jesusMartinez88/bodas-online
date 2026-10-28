@@ -126,4 +126,63 @@ describe('AuthService (sesión por cookie httpOnly)', () => {
     expect(service.isAuthenticated()).toBe(false);
     expect(localStorage.length).toBe(0);
   });
+
+  it('un 401 no se reporta como error de conexión', async () => {
+    const pending = service.ensureSession();
+
+    httpMock
+      .expectOne((req) => req.url.includes('/api/auth/me'))
+      .flush(
+        { success: false, message: 'Authentication required' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
+
+    await pending;
+
+    expect(service.sessionError()).toBeNull();
+  });
+
+  it('un fallo de red no se confunde con "sesión cerrada"', async () => {
+    const pending = service.ensureSession();
+
+    httpMock
+      .expectOne((req) => req.url.includes('/api/auth/me'))
+      .error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
+
+    await pending;
+
+    // El backend no respondió: no sabemos si hay sesión. Antes esto se
+    // traducía en un redirección a /login como si la sesión hubiera caducado.
+    expect(service.isAuthenticated()).toBe(false);
+    expect(service.sessionError()).not.toBeNull();
+  });
+
+  it('reintenta la consulta de sesión tras un fallo de conexión', async () => {
+    const pending = service.ensureSession();
+    httpMock
+      .expectOne((req) => req.url.includes('/api/auth/me'))
+      .error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
+    await pending;
+
+    expect(service.sessionError()).not.toBeNull();
+
+    const retry = service.retrySession();
+    httpMock
+      .expectOne((req) => req.url.includes('/api/auth/me'))
+      .flush({
+        success: true,
+        user: {
+          id: 9,
+          username: 'vuelve',
+          email: 'v@example.com',
+          role: 'user',
+          slug: 'vuelve',
+          paidAt: null,
+        },
+      });
+    await retry;
+
+    expect(service.isAuthenticated()).toBe(true);
+    expect(service.sessionError()).toBeNull();
+  });
 });

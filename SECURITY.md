@@ -143,6 +143,12 @@ añadir una regla de usuario con ese mismo nombre, **Render ignora la regla del
 usuario**: la respuesta sigue bringendo únicamente el default de 10 años. No
 hay ningún knob en el dashboard ni en el Blueprint para desactivarlo.
 
+Medido el **2026-10-28** sobre `https://tubodaonline.onrender.com/`: la
+respuesta trae **una sola** cabecera `strict-transport-security`, la de Render
+(`max-age=315360000; includeSubdomains; preload`). Si arrive a servirse la
+regla de usuario junto con el default, el navegador se quedaría con la más
+restrictiva (10 años) y el valor de 1 año no serviría de nada.
+
 ### Por qué no es un problema real
 
 1. **`preload` es un no-op aquí.** El `preload` de HSTS solo es efectivo si el
@@ -169,7 +175,9 @@ curl -I https://boda-backend-4e6z.onrender.com/health | grep -i strict-transport
 
 Si en el futuro Render permite sobrescribir el default, la regla ya está
 preparada en `render.yaml` (`max-age=31536000; includeSubDomains`) y basta con
-aplicar el Blueprint.
+aplicarla — en el Dashboard (el servicio actual se creó desde ahí, no desde el
+Blueprint) y comprobar con el `curl` de arriba que el valor efectivo pasa a ser
+`31536000`.
 
 ---
 

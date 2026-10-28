@@ -6,6 +6,10 @@ import { AuthService } from './auth.service';
  * La sesión vive en una cookie `httpOnly`: al recargar la página el frontend
  * no puede saber si hay sesión hasta que se lo pregunta al backend. Por eso
  * los guards son asíncronos y esperan a `ensureSession()` antes de decidir.
+ *
+ * Si el backend no ha podido responder no se sabe si hay sesión: eso no es
+ * lo mismo que estar deslogueado, así que se pasa el motivo al login
+ * (`?error=conexion`) en vez de mandar al usuario a "inicia sesión".
  */
 export const authGuard: CanActivateFn = async () => {
   const authService = inject(AuthService);
@@ -16,8 +20,9 @@ export const authGuard: CanActivateFn = async () => {
   if (authService.isAuthenticated()) {
     return true;
   }
-  router.navigate(['/login']);
-  return false;
+  return router.createUrlTree(['/login'], {
+    queryParams: authService.sessionError() ? { error: 'conexion' } : {},
+  });
 };
 
 /**
@@ -43,8 +48,9 @@ export const paymentGuard: CanActivateFn = async () => {
   await authService.ensureSession();
 
   if (!authService.isAuthenticated()) {
-    router.navigate(['/login']);
-    return false;
+    return router.createUrlTree(['/login'], {
+      queryParams: authService.sessionError() ? { error: 'conexion' } : {},
+    });
   }
 
   if (authService.isAdmin()) {
@@ -74,8 +80,9 @@ export const adminGuard: CanActivateFn = async () => {
   await authService.ensureSession();
 
   if (!authService.isAuthenticated()) {
-    router.navigate(['/login']);
-    return false;
+    return router.createUrlTree(['/login'], {
+      queryParams: authService.sessionError() ? { error: 'conexion' } : {},
+    });
   }
 
   if (authService.isAdmin()) {
