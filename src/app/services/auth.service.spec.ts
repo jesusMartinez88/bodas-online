@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -23,7 +23,7 @@ describe('AuthService (sesión por cookie httpOnly)', () => {
         // manda ningún token en la cabecera).
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
-        provideRouter([]),
+        provideRouter([{ path: 'login', children: [] }]),
       ],
     });
     service = TestBed.inject(AuthService);
@@ -155,6 +155,149 @@ describe('AuthService (sesión por cookie httpOnly)', () => {
     // traducía en un redirección a /login como si la sesión hubiera caducado.
     expect(service.isAuthenticated()).toBe(false);
     expect(service.sessionError()).not.toBeNull();
+  });
+
+  it('no cierra la sesión por un 401 si el backend confirma que sigue viva', async () => {
+    const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    service
+      .login({ username: 'usuario', password: 'contrasena' })
+      .subscribe({ error: () => undefined });
+    httpMock.expectOne((req) => req.url.includes('/api/auth/login')).flush({
+      success: true,
+      user: {
+        id: 7,
+        username: 'usuario',
+        email: 'u@example.com',
+        role: 'user',
+        slug: 'usuario',
+        paidAt: null,
+      },
+    });
+
+    // Una petición cualquiera vuelve con 401.
+    TestBed.inject(HttpClient)
+      .get('/api/auth/ejemplo')
+      .subscribe({ error: () => undefined });
+    httpMock
+      .expectOne((req) => req.url.includes('/api/auth/ejemplo'))
+      .flush(
+        { success: false, message: 'Authentication required' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
+    await tick();
+
+    // El interceptor revalida antes de cerrar la sesión...
+    const revalidation = httpMock.expectOne((req) => req.url.includes('/api/auth/me'));
+    revalidation.flush({
+      success: true,
+      user: {
+        id: 7,
+        username: 'usuario',
+        email: 'u@example.com',
+        role: 'user',
+        slug: 'usuario',
+        paidAt: null,
+      },
+    });
+    await tick();
+
+    // ...y como el backend confirma que la sesión sigue viva, no se cierra.
+    expect(service.isAuthenticated()).toBe(true);
+    expect(service.currentUser()?.username).toBe('usuario');
+  });
+
+  it('cierra la sesión si la revalidación también dice que no hay sesión', async () => {
+    const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    service
+      .login({ username: 'usuario', password: 'contrasena' })
+      .subscribe({ error: () => undefined });
+    httpMock.expectOne((req) => req.url.includes('/api/auth/login')).flush({
+      success: true,
+      user: {
+        id: 7,
+        username: 'usuario',
+        email: 'u@example.com',
+        role: 'user',
+        slug: 'usuario',
+        paidAt: null,
+      },
+    });
+
+    TestBed.inject(HttpClient)
+      .get('/api/auth/ejemplo')
+      .subscribe({ error: () => undefined });
+    httpMock
+      .expectOne((req) => req.url.includes('/api/auth/ejemplo'))
+      .flush(
+        { success: false, message: 'Authentication required' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
+    await tick();
+
+    const revalidation = httpMock.expectOne((req) => req.url.includes('/api/auth/me'));
+    revalidation.flush(
+      { success: false, message: 'Authentication required' },
+      { status: 401, statusText: 'Unauthorized' },
+    );
+    await tick();
+
+    // La sesión estaba muerta: se cierra y se avisa al backend (una sola vez).
+    const logout = httpMock.expectOne((req) => req.url.includes('/api/auth/logout'));
+    logout.flush({ success: true });
+    await tick();
+
+    expect(service.isAuthenticated()).toBe(false);
+    // Y no se encadena un segundo cierre de sesión.
+    expect(httpMock.match((req) => req.url.includes('/api/auth/logout')).length).toBe(0);
+  });
+
+  it('no pierde la sesión recién iniciada por una respuesta vieja de /api/auth/me', async () => {
+    // 1) Consulta de sesión en vuelo: la de rehidratación al arrancar la
+    //    página. Si el backend está dormido y tarda en despertar, esta
+    //    petición sigue abierta cuando el usuario ya ha escrito sus
+    //    credenciales.
+    const pending = service.ensureSession();
+    const meRequest = httpMock.expectOne((req) => req.url.includes('/api/auth/me'));
+
+    // 2) El usuario inicia sesión mientras esa petición sigue en vuelo.
+    service
+      .login({ username: 'usuario', password: 'contrasena' })
+      .subscribe({ error: () => undefined });
+    httpMock
+      .expectOne((req) => req.url.includes('/api/auth/login'))
+      .flush({
+        success: true,
+        user: {
+          id: 7,
+          username: 'usuario',
+          email: 'u@example.com',
+          role: 'user',
+          slug: 'usuario',
+          paidAt: null,
+        },
+      });
+
+    expect(service.isAuthenticated()).toBe(true);
+
+    // 3) Llega la respuesta vieja: 401, porque se pidió antes de que existiera
+    //    la cookie. Describe el estado anterior, no el actual.
+    meRequest.flush(
+      { success: false, message: 'Authentication required' },
+      { status: 401, statusText: 'Unauthorized' },
+    );
+    await pending;
+
+    // Si el bug está, el interceptor ve el 401, cree que la sesión caducó y
+    // cierra sesión. La drenamos para que `verify()` no se queje.
+    for (const request of httpMock.match(() => true)) {
+      request.flush({ success: true });
+    }
+
+    // La sesión que se acaba de iniciar no puede caer por una respuesta vieja.
+    expect(service.isAuthenticated()).toBe(true);
+    expect(service.currentUser()?.username).toBe('usuario');
   });
 
   it('reintenta la consulta de sesión tras un fallo de conexión', async () => {

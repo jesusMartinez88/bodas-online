@@ -2,6 +2,7 @@ import { Component, inject, signal, effect, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { form, FormField, submit, required, minLength } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { describeLoginError } from './login-error';
 import { AuthService } from '../../services/auth.service';
 import { PwaService } from '../../services/pwa.service';
 
@@ -153,7 +154,9 @@ export class LoginComponent {
             })
             .subscribe({
               next: () => resolve(),
-              error: () => reject(),
+              // Se propaga el error: sin él no se puede distinguir un 401 de un
+              // 429 (demasiados intentos) o de un fallo de red.
+              error: (err: unknown) => reject(err),
             });
         });
 
@@ -175,8 +178,8 @@ export class LoginComponent {
         // Usar replaceUrl para que la página de login no quede en el historial
         // y al pulsar "atrás" no vuelva al login
         this.router.navigate(target, { replaceUrl: true });
-      } catch {
-        this.errorMessage.set('Credenciales incorrectas. Por favor, inténtalo de nuevo.');
+      } catch (error) {
+        this.errorMessage.set(describeLoginError(error));
         this.generateCaptcha();
       } finally {
         this.isLoading.set(false);

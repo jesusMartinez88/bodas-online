@@ -78,6 +78,41 @@ export class AuthService {
   /** Promesa en curso de rehidratación, para no duplicar la llamada. */
   private sessionPromise: Promise<void> | null = null;
 
+  /**
+   * Generación de la sesión.
+   *
+   * Sube cada vez que el estado de la sesión cambia por una razón que invalida
+   * lo que devuelvan las peticiones ya en vuelo (un login, un registro o un
+   * logout). Una respuesta que llega con una generación antigua describe el
+   * estado **anterior**, así que no debe tocar el estado actual.
+   *
+   * Sin esto pasaba esto: al cargar la página se pide la sesión a
+   * `/api/auth/me`; si el backend está dormido, esa petición tarda (y el
+   * `ensureSession()` cachea la promesa). Mientras está en vuelo, el usuario
+   * inicia sesión y el backend responde 200. Entonces llega la respuesta
+   * vieja —un 401, porque se pidió antes de que existiera la cookie— y el
+   * interceptor, que ve un 401 con usuario "autenticado", cerraba la sesión
+   * recién iniciada y lo echaba al login. Justo lo que se vio en producción.
+   */
+  private sessionEpoch = 0;
+
+  /** Generación actual de la sesión (ver `sessionEpoch`). */
+  get sessionGeneration(): number {
+    return this.sessionEpoch;
+  }
+
+  /**
+   * ¿Se ha revalidado ya la sesión en esta generación?
+   *
+   * Evita que un 401 dispare revalidaciones encadenadas: la primera
+   * revalidación es la que decide, la segunda ya significa "la sesión está
+   * muerta de verdad".
+   */
+  private sessionRevalidated = false;
+
+  /** ¿Se ha cerrado ya la sesión en esta generación? (evita cierres dobles) */
+  private sessionClosed = false;
+
   isAuthenticated = computed(() => !!this.currentUserSignal());
   currentUser = this.currentUserSignal.asReadonly();
   isAdmin = computed(() => this.currentUserSignal()?.role === 'admin');
@@ -89,6 +124,14 @@ export class AuthService {
         tap((response) => {
           // La cookie de sesión ya la ha puesto el backend. Aquí solo se
           // refleja el usuario en el estado de la app.
+          //
+          // La sesión cambia: lo que devuelvan las peticiones que ya estaban en
+          // vuelo (la rehidratación que arrancó al cargar la página) describe
+          // el estado anterior, así que queda invalidado.
+          this.sessionEpoch++;
+          this.sessionPromise = null;
+          this.sessionRevalidated = false;
+          this.sessionClosed = false;
           this.currentUserSignal.set(toCurrentUser(response?.user));
           this.sessionResolved.set(true);
         }),
@@ -104,6 +147,12 @@ export class AuthService {
       .post<AuthRegisterResponse>(`${this.baseUrl}/api/auth/register`, payload)
       .pipe(
         tap((response) => {
+          // Igual que en el login: la sesión cambia y las peticiones en vuelo
+          // dejan de describir el estado actual.
+          this.sessionEpoch++;
+          this.sessionPromise = null;
+          this.sessionRevalidated = false;
+          this.sessionClosed = false;
           this.currentUserSignal.set(toCurrentUser(response?.user));
           this.sessionResolved.set(true);
         }),
@@ -131,16 +180,26 @@ export class AuthService {
     }
     if (this.sessionPromise) return this.sessionPromise;
 
+    // Generación en el momento de pedir la sesión: si mientras esta petición
+    // está en vuelo el usuario inicia sesión, su respuesta ya no describe el
+    // estado actual y se ignora.
+    const generation = this.sessionEpoch;
+
     this.sessionPromise = firstValueFrom(
       this.http
         .get<{ success: boolean; user?: CurrentUser }>(`${this.baseUrl}/api/auth/me`)
         .pipe(
           tap((response) => {
+            if (generation !== this.sessionEpoch) return;
             this.currentUserSignal.set(toCurrentUser(response?.user));
             this.sessionResolved.set(true);
             this.sessionError.set(null);
           }),
           catchError((error: HttpErrorResponse) => {
+            // Respuesta obsoleta: describe el estado anterior a un login o a un
+            // logout, no el actual.
+            if (generation !== this.sessionEpoch) return of(null);
+
             if (error.status === 401) {
               // 401 = no hay cookie válida: es el estado normal de un visitante
               // que no ha iniciado sesión, no un error.
@@ -162,10 +221,57 @@ export class AuthService {
     )
       .then(() => undefined)
       .finally(() => {
-        this.sessionPromise = null;
+        // Solo se libera la caché si esta sigue siendo la petición vigente: si
+        // hubo un login mientras estaba en vuelo, la cacheamos aparte.
+        if (generation === this.sessionEpoch) {
+          this.sessionPromise = null;
+        }
       });
 
     return this.sessionPromise;
+  }
+
+  /**
+   * Reacciona a un 401 del backend en una petición con sesión abierta.
+   *
+   * Un 401 aislado **no** echa al usuario: primero se revalida la sesión con
+   * una petición nueva al backend. Si esa revalidación confirma que la sesión
+   * sigue viva —porque la petición original se había enviado antes de que
+   * existiera la cookie, o porque el nodo que respondió no la tenía— no hay
+   * nada que cerrar. Solo si la revalidación también dice que no hay sesión,
+   * se cierra la sesión y se avisa al backend para que borre la cookie.
+   *
+   * Solo se revalida una vez por generación de sesión: así no se encadenan
+   * revalidaciones ni cierres de sesión.
+   */
+  async handleSessionUnauthorized(): Promise<void> {
+    // La revalidación ya se hizo en esta generación: la sesión está muerta.
+    if (this.sessionRevalidated) {
+      this.closeSession();
+      return;
+    }
+
+    this.sessionRevalidated = true;
+    this.sessionPromise = null;
+    await this.ensureSession();
+
+    // La sesión sigue viva: la petición que falló describía un estado
+    // anterior. No se cierra nada.
+    if (this.isAuthenticated()) {
+      return;
+    }
+
+    this.closeSession();
+  }
+
+  /** Cierra la sesión y avisa al backend. Una sola vez por generación. */
+  private closeSession(): void {
+    if (this.sessionClosed) {
+      return;
+    }
+    this.sessionClosed = true;
+    console.warn('Session invalid or expired. Logging out...');
+    this.logout();
   }
 
   /**
@@ -318,6 +424,10 @@ export class AuthService {
    * la sesión local se limpia igualmente.
    */
   logout() {
+    // La sesión cambia: las peticiones en vuelo dejan de describir el estado
+    // actual (y una respuesta 401 que llegue después ya no cerrará nada).
+    this.sessionEpoch++;
+    this.sessionPromise = null;
     this.currentUserSignal.set(null);
     this.sessionResolved.set(true);
 

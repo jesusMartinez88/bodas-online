@@ -21,21 +21,30 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   // navegador envíe la cookie (y solo a la API de casa).
   const request = isBrowser ? req.clone({ withCredentials: true }) : req;
 
+  // Generación de la sesión en el momento de enviar la petición. Si mientras
+  // está en vuelo el usuario inicia sesión (o se registra), su respuesta ya no
+  // describe el estado actual: un 401 de una petición antigua no debe cerrar
+  // la sesión recién iniciada.
+  const generation = authService.sessionGeneration;
+
   return next(request).pipe(
     catchError((error: HttpErrorResponse) => {
       // Solo deslogueamos si:
       // - Estamos en el navegador,
+      // - La petición no es de una sesión anterior (respuesta obsoleta),
       // - Teníamos sesión,
       // - El backend dice explícitamente que la sesión no es válida.
       if (!isBrowser) {
         return throwError(() => error);
       }
+      const isStale = generation !== authService.sessionGeneration;
       const isLoginEndpoint = req.url.includes('/api/auth/login');
       const isRegisterEndpoint = req.url.includes('/api/auth/register');
       const isLogoutEndpoint = req.url.includes('/api/auth/logout');
       const message = (error.error && (error.error.message || error.error.error)) || '';
       const sessionError =
         error.status === 401 &&
+        !isStale &&
         authService.isAuthenticated() &&
         !isLoginEndpoint &&
         !isRegisterEndpoint &&
@@ -47,8 +56,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           message.toLowerCase().includes('authentication'));
 
       if (sessionError) {
-        console.warn('Session invalid or expired. Logging out...');
-        authService.logout();
+        // La decisión la toma el servicio: revalida la sesión antes de cerrarla
+        // (un 401 aislado no debe echar al usuario) y, si la sesión está
+        // muerta de verdad, la cierra una sola vez.
+        void authService.handleSessionUnauthorized();
       }
       return throwError(() => error);
     }),
