@@ -159,7 +159,9 @@ export class AdminUsersComponent implements OnInit {
         u.username.toLowerCase().includes(query) ||
         (u.email ?? '').toLowerCase().includes(query) ||
         u.slug.toLowerCase().includes(query) ||
-        (u.notes ?? '').toLowerCase().includes(query)
+        (u.notes ?? '').toLowerCase().includes(query) ||
+        (u.partner1Name ?? '').toLowerCase().includes(query) ||
+        (u.partner2Name ?? '').toLowerCase().includes(query)
       );
     });
   });

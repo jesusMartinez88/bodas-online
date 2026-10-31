@@ -493,6 +493,17 @@
   border-radius: 4px;
 }
 
+/* Nombres de los novios (registro) */
+.user-couple {
+  margin-top: 0.15rem;
+}
+
+.user-couple__names {
+  color: var(--admin-text);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
 /* Email */
 .email-link {
   display: inline-flex;

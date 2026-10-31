@@ -25,6 +25,13 @@ export interface CurrentUser {
    * sincronizada de forma optimista tras un pago exitoso.
    */
   paidAt: string | null;
+  /**
+   * Nombres de la pareja, guardados por el backend en
+   * `users.partner1Name` / `users.partner2Name`. Son `null` en las cuentas
+   * creadas antes de que el registro los pidiera.
+   */
+  partner1Name: string | null;
+  partner2Name: string | null;
 }
 
 /**
@@ -41,6 +48,8 @@ const toCurrentUser = (
     role: user.role ?? 'user',
     slug: user.slug ?? '',
     paidAt: user.paidAt ?? null,
+    partner1Name: user.partner1Name ?? null,
+    partner2Name: user.partner2Name ?? null,
   };
 };
 

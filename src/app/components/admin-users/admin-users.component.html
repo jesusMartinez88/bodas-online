@@ -330,6 +330,13 @@
                       <span class="user-id">#{{ user.id }}</span>
                       <span class="user-slug">{{ user.slug }}</span>
                     </div>
+                    @if (user.partner1Name || user.partner2Name) {
+                      <div class="user-subtext user-couple">
+                        <span class="user-couple__names">
+                          {{ user.partner1Name || '—' }} &amp; {{ user.partner2Name || '—' }}
+                        </span>
+                      </div>
+                    }
                   </div>
                 </div>
               </td>

@@ -271,6 +271,16 @@ export interface AuthRegisterRequest {
   email: string;
   password: string;
   estimatedGuests?: number | null;
+  /**
+   * Nombres de la pareja. Se piden en el paso 1 del registro y se
+   * guardan en la fila del usuario (`users.partner1Name` /
+   * `users.partner2Name`).
+   *
+   * La nomenclatura es neutra: la pareja puede estar formada por dos
+   * personas del mismo sexo o por cualquier otra combinación.
+   */
+  partner1Name?: string;
+  partner2Name?: string;
 }
 
 export interface AuthUser {
@@ -285,6 +295,9 @@ export interface AuthUser {
    * exitoso (ver `AuthService.markAsPaid()`).
    */
   paidAt: string | null;
+  /** Nombres de la pareja. `null` en cuentas creadas antes de la feature. */
+  partner1Name: string | null;
+  partner2Name: string | null;
 }
 
 export interface AuthLoginResponse {
@@ -323,6 +336,9 @@ export interface AdminUser {
   todoCount: number;
   notes: string | null;
   isProtected: boolean;
+  /** Nombres de la pareja. `null` en cuentas creadas antes de la feature. */
+  partner1Name: string | null;
+  partner2Name: string | null;
 }
 
 export type AdminUserPatch = Partial<{

@@ -173,6 +173,44 @@
   gap: 0.5rem;
 }
 
+/* Nombres de la pareja: los dos campos van dentro de un fieldset para que
+   un lector de pantalla los anuncie como un grupo ("Nombres de la pareja")
+   y no como dos campos sueltos sin contexto. */
+.couple-names {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.couple-names__legend {
+  padding: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #831843;
+  letter-spacing: 0.01em;
+}
+
+.couple-names__hint {
+  margin: 0;
+  color: #9d174d;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+/* Los dos campos en la misma línea en escritorio; en móvil se apilan para
+   no estrechar los inputs. */
+.couple-names__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 0.85rem;
+}
+
 .form-label {
   font-size: 0.95rem;
   font-weight: 700;
@@ -664,6 +702,13 @@
 
   .payment-fields-row {
     gap: 0.75rem;
+  }
+
+  /* Los dos nombres de la pareja se apilan en móvil: en una sola columna
+     los inputs quedarían demasiado estrechos para escribir. */
+  .couple-names__row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .input-prefix {

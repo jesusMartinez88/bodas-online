@@ -38,6 +38,12 @@ const MAX_UPLOAD_BYTES = 1_500_000;
 const MAX_UPLOAD_PIXELS = 12_000_000;
 const MAX_UPLOAD_DIMENSION = 1800;
 
+/**
+ * Longitud máxima de cada nombre de la pareja. El backend aplica el
+ * mismo límite: es un nombre propio, no un campo de texto libre.
+ */
+const MAX_PARTNER_NAME_LENGTH = 100;
+
 type ImageKind = 'jpeg' | 'png' | 'webp';
 
 export async function detectImageKind(file: File): Promise<ImageKind | null> {
@@ -208,6 +214,16 @@ export class RegisterComponent {
     username: '',
     email: '',
     password: '',
+    /**
+     * Nombres de la pareja. Se piden en el paso 1 y el backend los guarda
+     * en `users.partner1Name` / `users.partner2Name`.
+     *
+     * La nomenclatura es neutra a propósito: la pareja puede estar formada
+     * por dos personas del mismo sexo o por cualquier otra combinación, así
+     * que los campos no presuponen ningún rol de género.
+     */
+    partner1Name: '',
+    partner2Name: '',
   };
 
   /**
@@ -263,6 +279,24 @@ export class RegisterComponent {
       !this.formData.password
     ) {
       this.errorMessage.set('Rellena todos los campos para continuar.');
+      return;
+    }
+    if (!this.formData.partner1Name.trim() || !this.formData.partner2Name.trim()) {
+      this.errorMessage.set(
+        'Indica los dos nombres de la pareja para continuar.',
+      );
+      return;
+    }
+    if (this.formData.partner1Name.trim().length > MAX_PARTNER_NAME_LENGTH) {
+      this.errorMessage.set(
+        `El primer nombre no puede pasar de ${MAX_PARTNER_NAME_LENGTH} caracteres.`,
+      );
+      return;
+    }
+    if (this.formData.partner2Name.trim().length > MAX_PARTNER_NAME_LENGTH) {
+      this.errorMessage.set(
+        `El segundo nombre no puede pasar de ${MAX_PARTNER_NAME_LENGTH} caracteres.`,
+      );
       return;
     }
     if (this.formData.password.length < 8) {
@@ -333,6 +367,8 @@ export class RegisterComponent {
             email: this.formData.email,
             password: this.formData.password,
             estimatedGuests: value.estimatedGuests,
+            partner1Name: this.formData.partner1Name.trim(),
+            partner2Name: this.formData.partner2Name.trim(),
           })
           .subscribe({
             next: (r) => resolve({ slug: r.user.slug }),

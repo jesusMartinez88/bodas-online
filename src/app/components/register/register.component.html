@@ -48,6 +48,44 @@
           </div>
         </div>
 
+        <fieldset class="couple-names">
+          <legend class="couple-names__legend">Nombres de la pareja</legend>
+          <p class="couple-names__hint" id="couple-names-hint">
+            Escribe el nombre de cada persona de la pareja.
+          </p>
+          <div class="couple-names__row">
+            <div class="form-field">
+              <label class="form-label" for="reg-partner1-name">Nombre 1</label>
+              <input
+                id="reg-partner1-name"
+                type="text"
+                [(ngModel)]="formData.partner1Name"
+                name="partner1Name"
+                required
+                maxlength="100"
+                placeholder="Paco"
+                autocomplete="given-name"
+                aria-describedby="couple-names-hint"
+                class="form-input">
+            </div>
+
+            <div class="form-field">
+              <label class="form-label" for="reg-partner2-name">Nombre 2</label>
+              <input
+                id="reg-partner2-name"
+                type="text"
+                [(ngModel)]="formData.partner2Name"
+                name="partner2Name"
+                required
+                maxlength="100"
+                placeholder="Lola"
+                autocomplete="family-name"
+                aria-describedby="couple-names-hint"
+                class="form-input">
+            </div>
+          </div>
+        </fieldset>
+
         <div class="form-field">
           <label class="form-label" for="reg-email">Email</label>
           <input
