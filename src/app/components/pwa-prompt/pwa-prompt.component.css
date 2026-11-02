@@ -1,10 +1,6 @@
 .pwa-overlay {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(8px);
+  inset: 0;
   z-index: 10002;
   display: flex;
   align-items: flex-end;
@@ -13,7 +9,26 @@
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/*
+ * El velo es un botón real (no un div con click) para que también sea
+ * alcanzable con el teclado. Se queda fuera del diálogo y sin foco:
+ * dentro del diálogo ya hay botones y la tecla Escape cierra.
+ */
+.pwa-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+}
+
 .pwa-prompt {
+  position: relative;
+  z-index: 1;
   background: white;
   border-radius: 24px 24px 0 0;
   padding: 2rem;
@@ -22,6 +37,17 @@
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
   text-align: center;
   animation: promptSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* El foco lo pone el componente al abrir el diálogo: sin anillo visible
+   salvo que el usuario navegue con el teclado. */
+.pwa-prompt:focus {
+  outline: none;
+}
+
+.pwa-prompt:focus-visible {
+  outline: 3px solid #ec4899;
+  outline-offset: 4px;
 }
 
 .prompt-icon {
@@ -42,6 +68,28 @@
   font-size: 0.95rem;
   line-height: 1.5;
   margin: 0 0 1.5rem 0;
+}
+
+/* Pasos de instalación manual (iOS). */
+.ios-steps {
+  text-align: left;
+  margin: 0 0 1.5rem 0;
+  padding-left: 1.25rem;
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.ios-steps li {
+  margin-bottom: 0.4rem;
+}
+
+.ios-steps li:last-child {
+  margin-bottom: 0;
+}
+
+.ios-steps strong {
+  color: #1e293b;
 }
 
 .prompt-actions {
@@ -85,6 +133,12 @@
   background: #f1f5f9;
 }
 
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible {
+  outline: 3px solid #be185d;
+  outline-offset: 2px;
+}
+
 .update-prompt {
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
   border: 2px solid #fbbf24;
@@ -123,6 +177,14 @@
   }
   50% {
     transform: translateY(-10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pwa-overlay,
+  .pwa-prompt,
+  .prompt-icon {
+    animation: none;
   }
 }
 

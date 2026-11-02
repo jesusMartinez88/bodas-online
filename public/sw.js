@@ -1,5 +1,17 @@
 const CACHE_NAME = 'tu-boda-online-v2.1.3';
-const urlsToCache = ['/', '/index.html', '/favicon.svg', '/favicon-ring.svg'];
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/favicon.svg',
+  '/favicon-ring.svg',
+  // El manifest y los iconos se necesitan para que la app siga siendo
+  // instalable y para que el icono se vea bien aunque no haya red.
+  '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/icon-maskable-512.png',
+  '/icons/apple-touch-icon-180.png',
+];
 
 /**
  * ¿La URL apunta a un chunk de build de Angular/Vite?

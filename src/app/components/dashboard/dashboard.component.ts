@@ -17,6 +17,7 @@ import { GuestFormModalComponent } from '../../shared/components/guest-form-moda
 import { GuestDeleteModalComponent } from '../../shared/components/guest-delete-modal/guest-delete-modal.component';
 import { ExitConfirmService } from '../../services/exit-confirm.service';
 import { ExitConfirmModalComponent } from '../../shared/components/exit-confirm-modal/exit-confirm-modal.component';
+import { InstallBannerComponent } from '../../shared/components/install-banner/install-banner.component';
 import { InvitationEditorComponent } from './invitation-editor/invitation-editor.component';
 
 @Component({
@@ -35,6 +36,7 @@ import { InvitationEditorComponent } from './invitation-editor/invitation-editor
     GuestDeleteModalComponent,
     ExitConfirmModalComponent,
     InvitationEditorComponent,
+    InstallBannerComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',

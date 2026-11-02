@@ -21,6 +21,7 @@ import {
 } from '../../../types/api';
 import { ExitConfirmService } from '../../services/exit-confirm.service';
 import { ExitConfirmModalComponent } from '../../shared/components/exit-confirm-modal/exit-confirm-modal.component';
+import { InstallBannerComponent } from '../../shared/components/install-banner/install-banner.component';
 import { VersionService } from '../../services/version.service';
 
 // Subcomponentes modulares
@@ -57,6 +58,7 @@ export type AdminSection = 'users' | 'discounts';
     AdminAccountModalComponent,
     AdminDeleteModalComponent,
     AdminDiscountCodesComponent,
+    InstallBannerComponent,
   ],
   templateUrl: './admin-users.component.html',
   styleUrl: './admin-users.component.css',

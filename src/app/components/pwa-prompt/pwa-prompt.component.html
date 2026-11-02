@@ -1,43 +1,80 @@
-<!-- Prompt de instalación - Solo en /dashboard -->
-@if (isInDashboard() && pwaService.showInstallPrompt()) {
-  <div
-    class="pwa-overlay"
-    (click)="dismissInstall()"
-    (keydown.enter)="dismissInstall()"
-    tabindex="0"
-    role="button"
-    aria-label="Cerrar instalación"
-  >
-    <div
-      class="pwa-prompt install-prompt"
-      (click)="$event.stopPropagation()"
-      (keydown.enter)="$event.stopPropagation()"
+<!-- Aviso de instalación: solo en las zonas de la app (panel y admin). -->
+@if (isInAppArea() && pwaService.showInstallPrompt()) {
+  <div class="pwa-overlay">
+    <button
+      type="button"
+      class="pwa-backdrop"
       tabindex="-1"
+      aria-label="Cerrar el aviso de instalación"
+      (click)="dismissInstall()"
+    ></button>
+
+    <div
+      #installDialog
+      class="pwa-prompt install-prompt"
       role="dialog"
       aria-modal="true"
       aria-labelledby="install-prompt-title"
+      aria-describedby="install-prompt-description"
+      tabindex="-1"
     >
-      <div class="prompt-icon">📱</div>
+      <div class="prompt-icon" aria-hidden="true">{{ pwaService.isIos() ? '📲' : '📱' }}</div>
       <h3 id="install-prompt-title">Instalar aplicación</h3>
-      <p>Añade esta app a tu pantalla de inicio para un acceso rápido y una mejor experiencia</p>
+
+      @if (pwaService.isIos()) {
+        <p id="install-prompt-description">
+          Añade esta app a tu pantalla de inicio para tenerla a mano con un toque.
+        </p>
+        <ol class="ios-steps">
+          <li>Pulsa el botón <strong>Compartir</strong> de la barra del navegador.</li>
+          <li>Elige <strong>Añadir a pantalla de inicio</strong>.</li>
+          <li>Confirma pulsando <strong>Añadir</strong>.</li>
+        </ol>
+      } @else {
+        <p id="install-prompt-description">
+          Añade esta app a tu pantalla de inicio para un acceso rápido y una mejor experiencia.
+        </p>
+      }
+
       <div class="prompt-actions">
-        <button class="btn-primary" (click)="installApp()">Instalar</button>
-        <button class="btn-secondary" (click)="dismissInstall()">Ahora no</button>
+        @if (!pwaService.isIos()) {
+          <button type="button" class="btn-primary" (click)="installApp()">Instalar</button>
+        }
+        <button type="button" class="btn-secondary" (click)="dismissInstall()">
+          {{ pwaService.isIos() ? 'Entendido' : 'Ahora no' }}
+        </button>
       </div>
     </div>
   </div>
 }
 
-<!-- Prompt de actualización - Solo en /dashboard -->
-@if (isInDashboard() && pwaService.showUpdatePrompt()) {
-  <div class="pwa-overlay" role="dialog" aria-modal="true" aria-labelledby="update-prompt-title">
-    <div class="pwa-prompt update-prompt">
-      <div class="prompt-icon">🔄</div>
+<!-- Aviso de actualización: solo en las zonas de la app (panel y admin). -->
+@if (isInAppArea() && pwaService.showUpdatePrompt()) {
+  <div class="pwa-overlay">
+    <button
+      type="button"
+      class="pwa-backdrop"
+      tabindex="-1"
+      aria-label="Cerrar el aviso de actualización"
+      (click)="dismissUpdate()"
+    ></button>
+
+    <div
+      class="pwa-prompt update-prompt"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="update-prompt-title"
+      aria-describedby="update-prompt-description"
+      tabindex="-1"
+    >
+      <div class="prompt-icon" aria-hidden="true">🔄</div>
       <h3 id="update-prompt-title">Nueva versión disponible</h3>
-      <p>Hay una actualización disponible. Recarga la página para obtener la última versión</p>
+      <p id="update-prompt-description">
+        Hay una actualización disponible. Recarga la página para obtener la última versión.
+      </p>
       <div class="prompt-actions">
-        <button class="btn-primary" (click)="reloadApp()">Actualizar ahora</button>
-        <button class="btn-secondary" (click)="dismissUpdate()">Más tarde</button>
+        <button type="button" class="btn-primary" (click)="reloadApp()">Actualizar ahora</button>
+        <button type="button" class="btn-secondary" (click)="dismissUpdate()">Más tarde</button>
       </div>
     </div>
   </div>

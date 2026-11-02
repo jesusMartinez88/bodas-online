@@ -206,6 +206,9 @@
   </aside>
 
   <main class="main-content">
+    <!-- Aviso de instalación de la PWA, por encima del título de la sección -->
+    <app-install-banner />
+
     @if (currentView() === 'stats') {
       <header class="content-header">
         <h1>Panel de Estadísticas</h1>
