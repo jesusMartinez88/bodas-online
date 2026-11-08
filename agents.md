@@ -52,3 +52,10 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+## Routing & In-Page Anchors
+
+- `index.html` declares `<base href="/">`. A fragment-only link (`href="#rsvp"`) is resolved against that base, NOT against the current route: on `/judith-jesus` the browser would navigate to `/#rsvp` (the landing) instead of scrolling inside the invitation. Build the href with the current route path (see `HeroComponent.ctaHref`) or handle the click manually.
+- `app.config.ts` keeps `withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' })`. Without `anchorScrolling`, the router discards the URL fragment and forces the scroll back to the top, so deep links like `/judith-jesus#rsvp` open at the wrong section.
+- `history.replaceState(null, '', '#rsvp')` has the same base-href pitfall: it also resolves against `<base href="/">`. Always pass the full path.
+

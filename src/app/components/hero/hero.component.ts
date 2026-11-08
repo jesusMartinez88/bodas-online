@@ -1,4 +1,19 @@
-import { Component, AfterViewInit, ElementRef, OnDestroy, input, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  AfterViewInit,
+  DestroyRef,
+  ElementRef,
+  OnDestroy,
+  computed,
+  inject,
+  input,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter } from 'rxjs';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { CountdownComponent } from '../countdown/countdown.component';
@@ -7,15 +22,21 @@ gsap.registerPlugin(ScrollTrigger);
 
 @Component({
   selector: 'app-hero',
-  standalone: true,
   imports: [CountdownComponent],
   templateUrl: './hero.component.html',
   styleUrl: './hero.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HeroComponent implements AfterViewInit, OnDestroy {
   readonly coverUrl = input<string | null>(null);
   readonly partner1Name = input<string>('Judith');
   readonly partner2Name = input<string>('Jesús');
+
+  /**
+   * Id de la sección a la que apunta el CTA dentro de esta misma vista
+   * (por defecto, el formulario de confirmación de asistencia).
+   */
+  readonly ctaTargetId = input<string>('rsvp');
   readonly heroContent = viewChild.required<ElementRef>('heroContent');
   readonly heroTitle = viewChild.required<ElementRef>('heroTitle');
   readonly heroSubtitle = viewChild.required<ElementRef>('heroSubtitle');
@@ -25,6 +46,22 @@ export class HeroComponent implements AfterViewInit, OnDestroy {
   readonly heroBackground = viewChild.required<ElementRef>('heroBackground');
   readonly heroOverlay = viewChild.required<ElementRef>('heroOverlay');
   readonly particlesCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('particlesCanvas');
+
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+
+  /**
+   * Ruta actual sin fragmento (`/judith-jesus`, `/helena-juan`, …).
+   *
+   * Hace falta porque `<base href="/">` hace que un `href="#rsvp"` a secas
+   * se resuelva contra la raíz del sitio: el navegador interpretaría
+   * `/judith-jesus` + `#rsvp` como `/#rsvp` y recargaría la landing en
+   * lugar de desplazarse a la sección de esta misma vista.
+   */
+  private readonly currentPath = signal<string>(this.router.url.split('#')[0] || '/');
+
+  /** href real del CTA: ruta actual + fragmento. */
+  readonly ctaHref = computed(() => `${this.currentPath()}#${this.ctaTargetId()}`);
 
   private particles: {
     x: number;
@@ -36,10 +73,45 @@ export class HeroComponent implements AfterViewInit, OnDestroy {
   }[] = [];
   private animationFrameId?: number;
 
+  constructor() {
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((event) => this.currentPath.set(event.urlAfterRedirects.split('#')[0] || '/'));
+  }
+
   ngAfterViewInit() {
     this.initAnimations();
     this.initScrollEffects();
     this.initParticles();
+  }
+
+  /**
+   * Desplaza la vista hasta la sección objetivo del CTA.
+   *
+   * Se gestiona a mano (en vez de dejar que el navegador resuelva el
+   * fragmento) por dos motivos:
+   *  - El `href` debe apuntar a esta misma vista, no a la raíz del sitio
+   *    (ver `currentPath`).
+   *  - El scroll lo hacemos nosotros para respetar
+   *    `prefers-reduced-motion`.
+   */
+  onCtaClick(event: Event): void {
+    event.preventDefault();
+
+    const targetId = this.ctaTargetId();
+    const target = document.getElementById(targetId);
+    if (!target) return;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+
+    // Actualiza el fragmento sin recargar ni disparar la navegación del router.
+    // Ojo: un `'#rsvp'` a secas se resolvería contra `<base href="/">` y
+    // dejaría la URL en `/#rsvp` en vez de `/{ruta}#rsvp`.
+    history.replaceState(null, '', `${this.currentPath()}#${targetId}`);
   }
 
   ngOnDestroy() {

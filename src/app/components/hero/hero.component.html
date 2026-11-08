@@ -20,7 +20,13 @@
         />
       </div>
 
-      <a href="#rsvp" class="hero-cta" #heroCta>Confirma tu asistencia</a>
+      <a
+        [href]="ctaHref()"
+        (click)="onCtaClick($event)"
+        class="hero-cta"
+        #heroCta
+        >Confirma tu asistencia</a
+      >
     </div>
   </div>
 

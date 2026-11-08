@@ -10,7 +10,16 @@ import { authInterceptor } from './services/auth.interceptor';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'top' })),
+    provideRouter(
+      routes,
+      withInMemoryScrolling({
+        scrollPositionRestoration: 'top',
+        // Sin esto, el router ignora el fragmento de la URL y devuelve el
+        // scroll al inicio: los deep-links del tipo `/judith-jesus#rsvp`
+        // se abrían en la sección equivocada.
+        anchorScrolling: 'enabled',
+      }),
+    ),
     provideHttpClient(withInterceptors([authInterceptor])),
   ],
 };

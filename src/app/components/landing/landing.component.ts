@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { RouterLink } from '@angular/router';
 import { LandingFooterComponent } from '../landing-footer/landing-footer.component';
 import { LandingHeaderComponent } from '../landing-header/landing-header.component';
+import { ScrollTopButtonComponent } from '../../shared/components/scroll-top-button/scroll-top-button.component';
 import { SectionNavigationService } from '../../services/section-navigation.service';
 import { SeoService } from '../../services/seo.service';
 import { AdminService } from '../../services/admin.service';
@@ -31,7 +32,12 @@ interface FeaturePill {
 
 @Component({
   selector: 'app-landing',
-  imports: [RouterLink, LandingHeaderComponent, LandingFooterComponent],
+  imports: [
+    RouterLink,
+    LandingHeaderComponent,
+    LandingFooterComponent,
+    ScrollTopButtonComponent,
+  ],
   templateUrl: './landing.component.html',
   styleUrl: './landing.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
