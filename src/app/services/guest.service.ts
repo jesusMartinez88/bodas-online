@@ -245,6 +245,7 @@ export class GuestService {
 
       const params = new URLSearchParams();
       params.set('name', guest.name || '');
+      params.set('slug', slug || '');
       params.set('email', guest.email || '');
       params.set('phone', guest.phone || '');
       params.set('attending', String(guest.attending ?? ''));
@@ -255,7 +256,6 @@ export class GuestService {
       params.set('isSavedInBbdd', String(guest.isSavedInBbdd ?? ''));
       params.set('allergies', guest.allergies || '');
       params.set('notes', guest.notes || '');
-      params.set('slug', slug || '');
       params.set('callback', callbackName);
 
       const script = document.createElement('script');

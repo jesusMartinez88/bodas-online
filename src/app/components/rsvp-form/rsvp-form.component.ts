@@ -1,5 +1,4 @@
-import { Component, signal, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, signal, inject, input } from '@angular/core';
 import {
   FormsModule,
   ReactiveFormsModule,
@@ -35,6 +34,8 @@ function getSubmitErrorMessage(error: unknown): string {
   styleUrl: './rsvp-form.component.css',
 })
 export class RsvpFormComponent {
+  readonly user = input<string>('');
+
   form: FormGroup;
   isSubmitting = signal(false);
   submitSuccess = signal(false);
@@ -45,7 +46,6 @@ export class RsvpFormComponent {
   private aiGenerate = inject(AiGenerateService);
   private formBuilder = inject(FormBuilder);
   private guestService = inject(GuestService);
-  private route = inject(ActivatedRoute);
 
   aiAvailable = this.chromeAi.isAvailable;
   aiLoading = this.chromeAi.isLoading;
@@ -107,8 +107,7 @@ export class RsvpFormComponent {
         guestData.attending = Number(guestData.adults || 0) + Number(guestData.children || 0);
       }
       
-      const tenantSlug = this.route.snapshot.paramMap.get('tenant') || this.route.parent?.snapshot.paramMap.get('tenant') || undefined;
-      await this.guestService.registerGuest(guestData, tenantSlug);
+      await this.guestService.registerGuest(guestData, this.user());
 
       this.submitSuccess.set(true);
 
