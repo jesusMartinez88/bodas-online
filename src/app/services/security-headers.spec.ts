@@ -118,6 +118,38 @@ describe('security headers policy', () => {
     expect(directives['script-src-attr']).toEqual(["'none'"]);
   });
 
+  it('allows the Google Apps Script backup without opening script-src', () => {
+    const headers = new Map<string, string>();
+    const response = {
+      setHeader: (name: string, value: string) => headers.set(name, value),
+    } as unknown as Response;
+
+    securityHeaders({} as Request, response, vi.fn() as unknown as NextFunction);
+
+    const csp = headers.get('Content-Security-Policy') ?? '';
+    const directives = Object.fromEntries(
+      csp
+        .split(';')
+        .map((directive) => directive.trim().split(/\s+/))
+        .filter((parts) => parts.length > 0)
+        .map((parts) => [parts[0], parts.slice(1)]),
+    );
+
+    // El backup a Google Sheets va por `fetch` con `mode: 'no-cors'`, así que
+    // solo necesita estar en `connect-src`.
+    expect(directives['connect-src']).toContain('https://script.google.com');
+    // Apps Script responde con un 302 a googleusercontent.com: el destino del
+    // redirect también se valida contra `connect-src`.
+    expect(directives['connect-src']).toContain('https://script.googleusercontent.com');
+
+    // `script.google.com` es un origen compartido por millones de Apps
+    // Scripts: si estuviera en `script-src`, cualquier script de Google
+    // podría ejecutarse en nuestra página. El backup usa POST, no JSONP,
+    // precisamente para no necesitar ese permiso.
+    expect(directives['script-src']).not.toContain('script.google.com');
+    expect(directives['script-src-attr']).toEqual(["'none'"]);
+  });
+
   it('does not open the policy to any origin', () => {
     const headers = new Map<string, string>();
     const response = {

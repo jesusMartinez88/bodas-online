@@ -232,6 +232,18 @@ services:
     #     challenge se renderiza dentro de la propia página de Stripe, así que
     #     no hace falta `https://*.3dsecure.io`. Si algún día el 3DS se
     #     embebiera en un modal propio, habría que añadirlo a frame-src.
+    #
+    # Google Apps Script (backup de invitados a Google Sheets):
+    #   · El backup se hace con `fetch(..., { mode: 'no-cors' })`
+    #     (guest.service.ts), no con JSONP: el JSONP inyectaba un `<script>`
+    #     con `callback=` y `script-src` (estricto) lo bloqueaba, así que el
+    #     backup nunca se guardaba y la promesa quedaba colgada.
+    #   · Por eso los dos orígenes van en `connect-src` y no en `script-src`:
+    #     el backup funciona sin permitir que se ejecute ningún script de
+    #     Google en nuestra página.
+    #   · `script.googleusercontent.com` hace falta porque Apps Script
+    #     responde con un 302 a ese host y el destino del redirect también
+    #     se valida contra `connect-src`.
     headers:
       - path: "/*"
         name: Content-Security-Policy
@@ -247,7 +259,7 @@ services:
           font-src 'self' https://fonts.gstatic.com data:;
           img-src 'self' data: blob: https:;
           media-src 'self' blob: https:;
-          connect-src 'self' https://boda-backend-4e6z.onrender.com https://api.stripe.com https://q.stripe.com https://www.googleapis.com;
+          connect-src 'self' https://boda-backend-4e6z.onrender.com https://api.stripe.com https://q.stripe.com https://www.googleapis.com https://script.google.com https://script.googleusercontent.com;
           frame-src 'self' https://js.stripe.com https://*.js.stripe.com https://hooks.stripe.com https://www.youtube.com;
           worker-src 'self' blob:;
           manifest-src 'self';

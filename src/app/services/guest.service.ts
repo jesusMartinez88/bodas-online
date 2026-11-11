@@ -28,9 +28,6 @@ export interface Guest {
   notes?: string;
 }
 
-type JsonpCallback = (data: Record<string, unknown>) => void;
-type JsonpCallbackWindow = Window & Record<string, JsonpCallback | undefined>;
-
 declare global {
   interface Window {
     NG_APP_SHEETURL?: string;
@@ -47,6 +44,15 @@ declare let process: {
 export class GuestService {
   private apiUrl = environment.apiUrl;
   private sheetUrl = window.NG_APP_SHEETURL || process.env['NG_APP_SHEETURL'] || null;
+
+  /**
+   * Timeout del POST de backup a Google Sheets.
+   *
+   * Sin AbortController, una petición bloqueada por la CSP o una macro que
+   * no responde dejaría la promesa colgada para siempre (el `onerror` de un
+   * `<script>` no se dispara cuando el navegador bloquea el recurso).
+   */
+  private static readonly SHEETS_BACKUP_TIMEOUT_MS = 8000;
 
   // Master signal for all guests in the app
   guests = signal<Guest[]>([]);
@@ -196,9 +202,10 @@ export class GuestService {
 
       guest.isSavedInBbdd = true;
 
-      // Enviar también a Google Sheets como backup (JSONP para evitar CORS)
-      this.addToGoogleSheetsJsonp(guest, tenantSlug).catch((error) => {
-        console.warn('Error adding to Google Sheets backup (JSONP):', error);
+      // Enviar también a Google Sheets como backup (POST no-cors: la CSP
+      // bloquea el JSONP basado en <script> hacia script.google.com).
+      this.addToGoogleSheetsBackup(guest, tenantSlug).catch((error) => {
+        console.warn('Error adding to Google Sheets backup:', error);
       });
       confetti({
         particleCount: 150,
@@ -210,16 +217,16 @@ export class GuestService {
       return responseData;
     } catch (error) {
       console.error('Error registering guest:', error);
-      // Si falla el servidor, intentar guardar en Google Sheets vía JSONP
+      // Si falla el servidor, intentar guardar en Google Sheets vía POST no-cors
       try {
-        await this.addToGoogleSheetsJsonp(guest, tenantSlug);
+        await this.addToGoogleSheetsBackup(guest, tenantSlug);
         confetti({
           particleCount: 150,
           spread: 70,
           origin: { y: 0.6 },
           colors: ['#be185d', '#ec4899', '#f472b6', '#ffffff'],
         });
-        // Return null since JSONP backup does not conform to ApiResponse shape
+        // Return null since the Sheets backup does not conform to ApiResponse shape
         return null;
       } catch (sheetError) {
         console.error('Error registering guest (both servers failed):', sheetError);
@@ -228,53 +235,60 @@ export class GuestService {
     }
   }
 
-  // Fallback usando JSONP (evita problemas CORS). Usa GET y un callback global.
-  private addToGoogleSheetsJsonp(guest: Guest, slug?: string): Promise<Record<string, unknown>> {
+  /**
+   * Backup en Google Sheets vía `fetch` con `mode: 'no-cors'`.
+   *
+   * Antes se usaba JSONP (inyectando un `<script>` con `callback=`), pero la
+   * CSP del frontend tiene `script-src` estricto y NO incluye
+   * `script.google.com`: el navegador bloqueaba el script, así que el backup
+   * nunca se guardaba y la promesa quedaba colgada para siempre.
+   *
+   * Con `no-cors` la petición sale como POST `application/x-www-form-urlencoded`
+   * (tipo "safelisted": no dispara preflight) y la respuesta llega *opaca*:
+   * no se puede leer el cuerpo ni el estado HTTP, pero Apps Script recibe los
+   * campos igual que en `doGet` (en `doPost`, `e.parameter` fusiona query y
+   * body). Requisito: el macro debe exponer `doPost`.
+   *
+   * `https://script.google.com` y `https://script.googleusercontent.com`
+   * están permitidos en `connect-src` (ver security-headers.ts / render.yaml);
+   * el segundo es necesario porque Apps Script responde con un 302 hacia
+   * `googleusercontent.com` y el navegador también valida ese destino.
+   */
+  private async addToGoogleSheetsBackup(guest: Guest, slug?: string): Promise<void> {
     const base = this.sheetUrl;
     if (!base) {
-      return Promise.reject(new Error('Google Sheets URL not configured'));
+      throw new Error('Google Sheets URL not configured');
     }
-    return new Promise((resolve, reject) => {
-      const callbackName = 'gs_cb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-      const jsonpWindow = window as unknown as JsonpCallbackWindow;
 
-      jsonpWindow[callbackName] = (data: Record<string, unknown>) => {
-        cleanup();
-        resolve(data);
-      };
+    const body = new URLSearchParams();
+    body.set('name', guest.name || '');
+    body.set('slug', slug || '');
+    body.set('email', guest.email || '');
+    body.set('phone', guest.phone || '');
+    body.set('attending', String(guest.attending ?? ''));
+    body.set('adults', String(guest.adults ?? '0'));
+    body.set('children', String(guest.children ?? '0'));
+    body.set('mealType', guest.mealType || '');
+    body.set('needsTransport', String(guest.needsTransport ?? ''));
+    body.set('isSavedInBbdd', String(guest.isSavedInBbdd ?? ''));
+    body.set('allergies', guest.allergies || '');
+    body.set('notes', guest.notes || '');
 
-      const params = new URLSearchParams();
-      params.set('name', guest.name || '');
-      params.set('slug', slug || '');
-      params.set('email', guest.email || '');
-      params.set('phone', guest.phone || '');
-      params.set('attending', String(guest.attending ?? ''));
-      params.set('adults', String(guest.adults ?? '0'));
-      params.set('children', String(guest.children ?? '0'));
-      params.set('mealType', guest.mealType || '');
-      params.set('needsTransport', String(guest.needsTransport ?? ''));
-      params.set('isSavedInBbdd', String(guest.isSavedInBbdd ?? ''));
-      params.set('allergies', guest.allergies || '');
-      params.set('notes', guest.notes || '');
-      params.set('callback', callbackName);
-
-      const script = document.createElement('script');
-      script.src = base + '?' + params.toString();
-      script.onerror = () => {
-        cleanup();
-        reject(new Error('JSONP script error'));
-      };
-      document.head.appendChild(script);
-
-      function cleanup() {
-        try {
-          delete jsonpWindow[callbackName];
-        } catch {
-          // ignore cleanup error
-        }
-        if (script.parentNode) script.parentNode.removeChild(script);
-      }
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      GuestService.SHEETS_BACKUP_TIMEOUT_MS,
+    );
+    try {
+      await fetch(base, {
+        method: 'POST',
+        mode: 'no-cors',
+        body,
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   // Obtiene la lista actual desde la API (no desde la cache)

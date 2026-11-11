@@ -39,6 +39,21 @@ import type { NextFunction, Request, Response } from 'express';
  *     challenge se renderiza dentro de la propia página de Stripe, así que
  *     no hace falta `https://*.3dsecure.io`. Si algún día el 3DS se
  *     embebiera en un modal propio, habría que añadirlo a frame-src.
+ *
+ * Google Apps Script (backup de invitados a Google Sheets):
+ *   · El backup se hace con `fetch(..., { mode: 'no-cors' })` en
+ *     guest.service.ts, NO con JSONP. El JSONP inyectaba un `<script>` con
+ *     `callback=` y, como `script-src` es estricto (no incluye
+ *     `script.google.com`), el navegador lo bloqueaba: el backup nunca se
+ *     guardaba y la promesa quedaba colgada para siempre, porque el
+ *     `onerror` del `<script>` no se dispara cuando el bloqueo es por CSP.
+ *   · Por eso los dos orígenes van en `connect-src` y NO en `script-src`:
+ *     el backup sigue funcionando sin abrir `script-src` a un origen
+ *     compartido por millones de Apps Scripts (permitirlo abriría la puerta
+ *     a que cualquier script de Google se ejecutase en nuestra página).
+ *   · `script.googleusercontent.com` también es necesario: Apps Script
+ *     responde con un 302 hacia ese host y el navegador valida también el
+ *     destino del redirect contra `connect-src`.
  */
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
@@ -52,7 +67,7 @@ const CONTENT_SECURITY_POLICY = [
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",
   "media-src 'self' blob: https:",
-  "connect-src 'self' https://boda-backend-4e6z.onrender.com https://api.stripe.com https://q.stripe.com https://www.googleapis.com",
+  "connect-src 'self' https://boda-backend-4e6z.onrender.com https://api.stripe.com https://q.stripe.com https://www.googleapis.com https://script.google.com https://script.googleusercontent.com",
   "frame-src 'self' https://js.stripe.com https://*.js.stripe.com https://hooks.stripe.com https://www.youtube.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
