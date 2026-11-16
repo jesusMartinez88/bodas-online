@@ -2,6 +2,9 @@ User-agent: *
 Allow: /
 Disallow: /login
 Disallow: /register
+Disallow: /complete-payment
+Disallow: /payment/
+Disallow: /admin/
 Disallow: /*/dashboard
 
 Sitemap: https://tubodaonline.onrender.com/sitemap.xml

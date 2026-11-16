@@ -1,10 +1,11 @@
-import { Component, inject, signal, effect, PLATFORM_ID } from '@angular/core';
+import { Component, inject, signal, effect, OnInit, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { form, FormField, submit, required, minLength } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { describeLoginError } from './login-error';
 import { AuthService } from '../../services/auth.service';
 import { PwaService } from '../../services/pwa.service';
+import { SeoService } from '../../services/seo.service';
 
 @Component({
   selector: 'app-login',
@@ -13,12 +14,13 @@ import { PwaService } from '../../services/pwa.service';
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private pwaService = inject(PwaService);
   private platformId = inject(PLATFORM_ID);
+  private seo = inject(SeoService);
 
   // Model signal - never use null/undefined as initial values
   protected readonly loginModel = signal({
@@ -93,6 +95,24 @@ export class LoginComponent {
         this.intervalId = undefined;
         this.loadingMessage.set('');
       }
+    });
+  }
+
+  /**
+   * SEO de la pantalla de acceso.
+   *
+   * El login NO debe indexarse: no es contenido, es una pantalla de
+   * autenticación y además el `index.html` estático la sirve para
+   * cualquier ruta del SPA. Se declara `noindex, follow` explícitamente
+   * para que el valor no dependa del HTML base.
+   */
+  ngOnInit(): void {
+    this.seo.update({
+      title: 'Iniciar sesión · Tu Boda Online',
+      description:
+        'Accede al panel privado de tu boda online para gestionar invitados, mesas, regalos y la lista de música.',
+      canonical: 'https://tubodaonline.onrender.com/login',
+      robots: 'noindex, follow',
     });
   }
 

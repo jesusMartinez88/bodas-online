@@ -39,10 +39,18 @@
          (crawlers sin JS, vista de "ver código fuente"). Cada
          componente actualiza su propio SEO vía `SeoService` cuando
          monta: este bloque representa lo que ve un crawler que NO
-         ejecuta Angular. -->
+         ejecuta Angular.
+
+         `robots` empieza en `noindex, follow` a propósito: el HTML
+         estático se sirve para CUALQUIER ruta (es un SPA), así que
+         por defecto no debe indexarse. Las páginas que sí queremos
+         indexables (landing, contacto, invitaciones) declaran
+         explícitamente `index, follow` en su `SeoService.update()`.
+         Sin esto, cada URL inventada que caiga en el fallback sería
+         un duplicado indexable del mismo HTML. -->
     <meta name="description" content="Creá tu invitación de boda online con confirmación de asistencia, organizador visual de mesas y playlist colaborativa. Pago único de 59€, lista en 24-48 horas." />
     <meta name="keywords" content="invitación de boda digital, RSVP online, gestión de mesas boda, invitación web boda, boda online, organizador mesas" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="noindex, follow" />
 
     <!-- Open Graph (Facebook, WhatsApp, LinkedIn, Discord…). -->
     <meta property="og:type" content="website" />

@@ -23,6 +23,21 @@ export interface SeoConfig {
   description?: string;
   /** URL absoluta. Si se omite, se rellena con `location.origin + path`. */
   canonical?: string;
+  /**
+   * Directivas del meta `robots`.
+   *
+   * Por defecto el sitio es indexable (`index, follow`), pero hay rutas
+   * que NO deben indexarse nunca:
+   *   · `/login`, `/register` (pantallas de autenticación).
+   *   · La pantalla de "invitación no encontrada" (`:tenant`): sin ella,
+   *     Google indexa un número infinito de URLs de error como si fueran
+   *     páginas de contenido (soft 404), consumiendo presupuesto de
+   *     rastreo y degradando la calidad del sitio entero.
+   *
+   * `noindex, follow` (y no `nofollow`) es lo correcto aquí: la página
+   * no se indexa, pero Google sigue los enlaces que contiene.
+   */
+  robots?: string;
   /** Imagen para Open Graph / Twitter. URL absoluta recomendada. */
   image?: string;
   /** Keywords (opcional; Google ya las ignora, pero algunos crawlers sí). */
@@ -88,8 +103,17 @@ export class SeoService {
    * llamarla varias veces con los mismos valores no duplica tags.
    */
   update(config: SeoConfig): void {
-    const { title, description, canonical, image, keywords, og, twitter, jsonLd } =
-      config;
+    const {
+      title,
+      description,
+      canonical,
+      robots,
+      image,
+      keywords,
+      og,
+      twitter,
+      jsonLd,
+    } = config;
 
     // ── Title ──
     if (title !== undefined) {
@@ -105,6 +129,12 @@ export class SeoService {
     if (keywords !== undefined) {
       this.upsertMeta(META, 'keywords', keywords);
     }
+
+    // ── Robots ──
+    // Se actualiza siempre (no solo si viene definido) porque las rutas
+    // navegarán entre sí dentro de la SPA: sin esto, el `noindex` de una
+    // ruta anterior se "pega" a la siguiente y la deja fuera del índice.
+    this.upsertMeta(META, 'robots', robots ?? 'index, follow');
 
     // ── Canonical ──
     if (canonical !== undefined) {
@@ -189,6 +219,7 @@ export class SeoService {
   reset(): void {
     this.meta.removeTag('name="description"');
     this.meta.removeTag('name="keywords"');
+    this.meta.removeTag('name="robots"');
     for (const p of [
       'og:title',
       'og:description',

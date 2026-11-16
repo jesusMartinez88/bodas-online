@@ -12,6 +12,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { PaymentService } from '../../services/payment.service';
 import { AuthService } from '../../services/auth.service';
+import { SeoService } from '../../services/seo.service';
 import type { AppliedDiscount, PaymentIntentResponse } from '../../../types/api';
 import type { StripePaymentElement } from '@stripe/stripe-js';
 
@@ -68,6 +69,7 @@ export class CompletePaymentComponent implements OnInit {
   private readonly paymentService = inject(PaymentService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly seo = inject(SeoService);
 
   /**
    * `effect` único que monta/desmonta el Payment Element de Stripe
@@ -95,6 +97,12 @@ export class CompletePaymentComponent implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
+    // Pantalla de checkout: contenido privado, nunca indexable.
+    this.seo.update({
+      title: 'Completar el pago · Tu Boda Online',
+      robots: 'noindex, nofollow',
+    });
+
     // La sesión se rehidrata desde el backend (cookie `httpOnly`): sin esto,
     // al recargar la página `currentUser()` todavía sería null y un usuario
     // que ya ha pagado vería el formulario de pago en vez de su dashboard.

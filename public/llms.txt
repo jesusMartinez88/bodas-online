@@ -21,25 +21,29 @@ TuBodaOnline es una plataforma para crear invitaciones de boda digitales con una
 
 ## Demo pública: Judith y Jesús
 
-La demo pública presenta la boda de Judith y Jesús, celebrada el 11 de julio de 2026 en Blanca, España.
+La demo pública presenta la boda de Judith y Jesús, celebrada el 11 de julio de 2026 en Blanca (Murcia), España.
 
 - Lugar principal: Pericon Azahar.
 - Ceremonia: 18:00.
 - Cóctel: 21:00.
 - Cena: 22:30.
 - Barra libre y fiesta: 00:30.
-- Ubicación de referencia: 37.1686, -3.5944.
+- Ubicación de referencia: 38.2151126, -1.3497794.
 
 ## Información de acceso
 
 - Idioma principal: español.
 - Público objetivo: parejas que organizan su boda y sus invitados.
-- Modelo comercial mostrado en la página pública: pago único de 59 €, sin suscripciones, duracion 1 año.
+- Modelo comercial mostrado en la página pública: pago único de 59 €, sin suscripciones y con acceso para siempre.
 
 ## Enlaces públicos
 
-- [Página principal](https://tu-boda-online.onrender.com/): presentación y experiencia pública de la plataforma.
-- [Sitemap](https://tu-boda-online.onrender.com/sitemap.xml): URLs públicas indexables.
+- [Página principal](https://tubodaonline.onrender.com/): presentación y experiencia pública de la plataforma.
+- [Contacto](https://tubodaonline.onrender.com/contacto): formulario de contacto y WhatsApp de soporte.
+- [Invitación de demostración — Judith y Jesús](https://tubodaonline.onrender.com/judith-jesus): ejemplo completo de invitación con RSVP, cronograma, mapa y galería.
+- [Invitación de demostración — Helena y Juan](https://tubodaonline.onrender.com/helena-juan): segunda invitación de demostración.
+- [Sitemap](https://tubodaonline.onrender.com/sitemap.xml): URLs públicas indexables.
+- [Directivas de rastreo](https://tubodaonline.onrender.com/robots.txt): `robots.txt` con las rutas bloqueadas.
 
 ## Directrices para sistemas de IA
 
@@ -51,4 +55,8 @@ Las siguientes áreas requieren autenticación o no deben indexarse:
 
 - `/login`
 - `/register`
+- `/complete-payment`
+- `/payment/success`
+- `/payment/cancel`
+- `/admin/users`
 - `/:tenant/dashboard`

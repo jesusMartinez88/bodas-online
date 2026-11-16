@@ -23,6 +23,7 @@ import { ExitConfirmService } from '../../services/exit-confirm.service';
 import { ExitConfirmModalComponent } from '../../shared/components/exit-confirm-modal/exit-confirm-modal.component';
 import { InstallBannerComponent } from '../../shared/components/install-banner/install-banner.component';
 import { VersionService } from '../../services/version.service';
+import { SeoService } from '../../services/seo.service';
 
 // Subcomponentes modulares
 import { AdminStatsComponent } from './components/admin-stats/admin-stats.component';
@@ -71,6 +72,7 @@ export class AdminUsersComponent implements OnInit {
   private host = inject(ElementRef<HTMLElement>);
   protected exitConfirmService = inject(ExitConfirmService);
   private versionService = inject(VersionService);
+  private seo = inject(SeoService);
 
   // Estado de lista de usuarios
   users = signal<AdminUser[]>([]);
@@ -169,6 +171,12 @@ export class AdminUsersComponent implements OnInit {
   });
 
   ngOnInit() {
+    // Panel de administración: contenido privado, nunca indexable.
+    this.seo.update({
+      title: 'Administración · Tu Boda Online',
+      robots: 'noindex, nofollow',
+    });
+
     this.loadUsers();
     this.loadVisitStats();
     this.loadRegisterClickStats();

@@ -5,6 +5,7 @@ import {
   effect,
   ElementRef,
   inject,
+  OnInit,
   signal,
   viewChild,
 } from '@angular/core';
@@ -18,6 +19,7 @@ import { AuthService } from '../../services/auth.service';
 import { LandingQuestionnaireService } from '../../services/landing-questionnaire.service';
 import { InvitationMediaService } from '../../services/invitation-media.service';
 import { PaymentService } from '../../services/payment.service';
+import { SeoService } from '../../services/seo.service';
 import {
   LandingQuestionnaireComponent,
   LandingQuestionnaireValue,
@@ -96,7 +98,9 @@ export async function detectImageKind(file: File): Promise<ImageKind | null> {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule, CommonModule, LandingQuestionnaireComponent],
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
+  private readonly seo = inject(SeoService);
+
   constructor() {
     /**
      * `effect` que monta/desmonta el Payment Element cuando el
@@ -132,6 +136,25 @@ export class RegisterComponent {
         this.paymentService.mountPaymentElement(container);
     });
   }
+
+  /**
+   * SEO del alta de una boda nueva.
+   *
+   * `/register` es el formulario de compra: no es contenido que deba
+   * indexarse, y además el `index.html` estático se sirve para cualquier
+   * ruta del SPA. `noindex, follow` explícito para no depender del
+   * HTML base.
+   */
+  ngOnInit(): void {
+    this.seo.update({
+      title: 'Crear tu invitación de boda · Tu Boda Online',
+      description:
+        'Crea tu invitación de boda online con RSVP, gestión de mesas y playlist compartida. Pago único de 59€, lista en 24-48 horas.',
+      canonical: 'https://tubodaonline.onrender.com/register',
+      robots: 'noindex, follow',
+    });
+  }
+
   protected readonly step = signal<1 | 2 | 3 | 4>(1);
   protected readonly processing = signal(false);
   protected readonly errorMessage = signal<string | null>(null);

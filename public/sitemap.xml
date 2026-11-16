@@ -2,13 +2,13 @@
 <urlset
         xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-  <!-- Landing pública: única URL indexable del producto. -->
+  <!-- Landing pública: página principal del producto. -->
   <!-- Las invitaciones privadas (/:slug) NO aparecen aquí a propósito:
        son URLs públicas por diseño pero el producto no las lista en
        el sitemap. Google las descubre si enlaces externos las apuntan. -->
   <url>
     <loc>https://tubodaonline.onrender.com/</loc>
-    <lastmod>2026-10-23</lastmod>
+    <lastmod>2026-11-12</lastmod>
     <!-- <changefreq>daily</changefreq> -->
     <priority>1.0</priority>
     <image:image>
@@ -16,5 +16,12 @@
       <image:title>Tu Boda Online — Diseñamos tu invitación digital a medida</image:title>
       <image:caption>Plataforma de invitaciones de boda digitales con RSVP, gestión de mesas y panel privado para los novios.</image:caption>
     </image:image>
+  </url>
+  <!-- Página de contacto: contenido público real, con su propio
+       título, descripción y canonical (ya no duplicaba la landing). -->
+  <url>
+    <loc>https://tubodaonline.onrender.com/contacto</loc>
+    <lastmod>2026-11-12</lastmod>
+    <priority>0.8</priority>
   </url>
 </urlset>

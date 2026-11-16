@@ -9,6 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
 import { PaymentService } from '../../services/payment.service';
 import { AuthService } from '../../services/auth.service';
+import { SeoService } from '../../services/seo.service';
 
 /**
  * Página de retorno de Stripe Hosted Checkout (`success_url`).
@@ -56,6 +57,7 @@ export class PaymentSuccessComponent implements OnInit {
   private readonly paymentService = inject(PaymentService);
   private readonly authService = inject(AuthService);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly seo = inject(SeoService);
 
   /**
    * Número máximo de reintentos para esperar al webhook. Cada reintento
@@ -66,6 +68,12 @@ export class PaymentSuccessComponent implements OnInit {
   private static readonly RETRY_DELAY_MS = 2000;
 
   async ngOnInit(): Promise<void> {
+    // Pantalla de retorno de pago: contenido privado, nunca indexable.
+    this.seo.update({
+      title: 'Pago confirmado · Tu Boda Online',
+      robots: 'noindex, nofollow',
+    });
+
     if (!isPlatformBrowser(this.platformId)) {
       // En SSR no podemos hablar con el backend ni leer query params
       // útiles. La ruta ya se renderiza Client gracias al catch-all

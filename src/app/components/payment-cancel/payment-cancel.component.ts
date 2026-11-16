@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { SeoService } from '../../services/seo.service';
 
 /**
  * Página de retorno de Stripe Hosted Checkout (`cancel_url`).
@@ -23,8 +24,17 @@ import { Router } from '@angular/router';
   styleUrl: './payment-cancel.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PaymentCancelComponent {
+export class PaymentCancelComponent implements OnInit {
   private readonly router = inject(Router);
+  private readonly seo = inject(SeoService);
+
+  ngOnInit(): void {
+    // Pantalla de retorno de pago: contenido privado, nunca indexable.
+    this.seo.update({
+      title: 'Pago cancelado · Tu Boda Online',
+      robots: 'noindex, nofollow',
+    });
+  }
 
   /** Reintenta el pago: lo mandamos a la pantalla de pago ya montada. */
   retryPayment(): void {

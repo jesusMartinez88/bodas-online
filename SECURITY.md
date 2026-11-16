@@ -55,8 +55,8 @@ de Render (*Settings → Headers*). Verificadas en producción con `curl -I`.
 
 ### Qué hace el sitio
 
-`render.yaml` declara 38 reglas de reescritura (19 extensiones × raíz + anidados)
-y un catch-all final:
+`render.yaml` declara 38 reglas de reescritura (19 extensiones × raíz + anidados),
+3 rewrites para las rutas con página prerenderizada y un catch-all final:
 
 ```yaml
 routes:
@@ -68,8 +68,17 @@ routes:
     source: "/*/*.map"                           # (variante anidada)
     destination: "/__asset_not_found__.png"
   - type: rewrite
+    source: "/login"                            # rutas prerenderizadas:
+    destination: "/login/index.html"             # cada una sirve SU página
+  - type: rewrite
+    source: "/register"
+    destination: "/register/index.html"
+  - type: rewrite
+    source: "/contacto"
+    destination: "/contacto/index.html"
+  - type: rewrite
     source: "/*"
-    destination: "/index.html"   # fallback SPA
+    destination: "/index.csr.html"   # fallback SPA (shell CSR, `noindex`)
 ```
 
 El destino `/__asset_not_found__.png` **no debe existir nunca** y la extensión
@@ -124,6 +133,49 @@ ya tiene:
 
 Coste: un servicio siempre activo (en lugar de un CDN estático gratuito) y
 cold starts. Por eso la vía por defecto sigue siendo el Static Site.
+
+### Soft 404 de rutas de navegación (resuelto en la capa SEO)
+
+El "soft 404" más grave **no** era el de los assets, sino el de las rutas de
+navegación. Antes del 2026-11-12 el catch-all servía `/index.html`, es decir
+**la landing prerenderizada**, para cualquier ruta sin extensión:
+
+```
+GET /pedro-luis   →  200  79 KB  (HTML de la landing: mismo <title>,
+GET /zzz-123      →  200  79 KB   mismo canonical, mismo <h1>)
+GET /foo/bar/baz  →  200  79 KB
+```
+
+Es decir, un espacio infinito de URLs indexables duplicando la home. Google
+indexaba cada slug inventado como si fuera contenido y consumía el presupuesto
+de rastreo en paginas que no existen.
+
+La solución tiene dos capas:
+
+1. **Edge (`render.yaml`).** El catch-all apunta ahora a `/index.csr.html`, el
+   shell "client side rendering" que genera el build de Angular: el mismo
+   `<head>` pero sin contenido prerenderizado. Como el `<meta name="robots">`
+   del `index.html` es `noindex, follow`, cualquier ruta inventada que caiga
+   ahí queda fuera del índice. Además, `/login`, `/register` y `/contacto`
+   tienen rewrite propio y sirven su página prerenderizada real, en lugar de
+   la landing.
+2. **Aplicación (`SeoService`).** Cada ruta declara su propio `<title>`,
+   `description`, `canonical` y `robots`:
+   - Indexables (`index, follow`): `/` (landing), `/contacto` y las
+     invitaciones (`/<slug>`), cada una con su canonical propio.
+   - No indexables (`noindex, follow`): `/login`, `/register`,
+     `/:tenant/dashboard`, `/payment/*`, `/complete-payment`, `/admin/users`.
+   - La pantalla de "invitación no encontrada" (`:tenant`) va en
+     `noindex, follow` con el canonical apuntando a la home: no se indexa,
+     pero Google sigue los enlaces (se conserva el descubrimiento por
+     backlinks).
+
+**Por qué no un 404 real.** En un Static Site de Render no existe una regla
+que fije el status 404, y el catch-all es imprescindible para el deep-linking
+del SPA: las invitaciones son rutas dinámicas `/:slug` que no se pueden
+enumerar en el YAML (cada cliente nuevo trae la suya). Devolver 404 para
+cualquier ruta desconocida rompería las invitaciones. Lo que Google respeta
+para decidir qué se indexa es `noindex` + `canonical`, y eso queda resuelto.
 
 ---
 

@@ -3,7 +3,9 @@
 # =============================================================================
 # Cubre los hallazgos de la revisión de seguridad:
 #   #1 Frontend sin CSP / frame-ancestors / Referrer-Policy / Permissions-Policy
-#   #3 El fallback SPA devolvía 200 text/html para cualquier ruta inexistente
+#   #3 El fallback SPA devolvía el HTML indexable de la landing (200) para
+#      cualquier ruta inexistente (soft-404). Ahora el catch-all sirve el shell
+#      CSR con `noindex, follow` y cada ruta prerenderizada tiene su rewrite.
 #   #5 HSTS incoherente (10 años en el front, 1 año en el backend) y con preload
 #      sobre un subdominio de Render que no controlamos.
 #
@@ -73,8 +75,9 @@ services:
     #
     # `.png` no está en la lista de sources a propósito: es el destination.
     # Las demás extensiones (.csv, .wasm, .docx, ...) y las rutas de navegación
-    # sin punto las sirve el catch-all SPA con el index.html, que es lo
-    # correcto. El slug de tenant nunca lleva punto (el backend lo genera con
+    # sin punto las sirve el catch-all SPA con el shell CSR
+    # (`/index.csr.html`, `noindex`), que es lo correcto. El slug de tenant
+    # nunca lleva punto (el backend lo genera con
     # `replace(/[^a-z0-9]+/g, "-")`), así que ninguna ruta legítima cae aquí.
     #
     # Patrones de Render: `/*.ext` casa con un único segmento en la raíz
@@ -203,9 +206,53 @@ services:
       - type: rewrite
         source: "/**/*.zip"
         destination: "/__asset_not_found__.png"
+      # -------------------------------------------------------------------------
+      # Rutas con página prerenderizada
+      # -------------------------------------------------------------------------
+      # Render NO resuelve `/login` → `login/index.html` por sí solo (no hace
+      # de "directory index"). Sin estas reglas, `/login` caía en el
+      # catch-all y devolvía el HTML de la LANDING: mismo `<title>`, mismo
+      # canonical, mismo `<h1>` que `/`. Es decir, `/login` era un duplicado
+      # indexable de la home (y `/register` y `/contacto` igual).
+      #
+      # Con el rewrite, cada ruta sirve SU página prerenderizada, con su
+      # propio `<title>`, su canonical y sus meta `robots`.
+      - type: rewrite
+        source: "/login"
+        destination: "/login/index.html"
+      - type: rewrite
+        source: "/register"
+        destination: "/register/index.html"
+      - type: rewrite
+        source: "/contacto"
+        destination: "/contacto/index.html"
+
+      # -------------------------------------------------------------------------
+      # Catch-all SPA → shell CSR (`noindex`), NO el HTML de la landing
+      # -------------------------------------------------------------------------
+      # Antes el destino era `/index.html`, que es la landing prerenderizada:
+      # su `<title>`, su `<meta name="robots" content="index, follow">` y su
+      # `<link rel="canonical" href=".../">` acababan en CUALQUIER ruta
+      # inventada del sitio (`/pedro-luis`, `/zzz-123`, `/foo/bar/baz`...).
+      # Eso es el soft-404: un espacio infinito de URLs indexables duplicando
+      # la home, que consume el presupuesto de rastreo y hace que Google
+      # descarte el sitio entero por duplicación.
+      #
+      # `/index.csr.html` es el shell "client side rendering" que genera el
+      # build de Angular: el mismo `<head>` (base, meta, scripts) pero SIN
+      # contenido prerenderizado. Como el `<meta name="robots">` del
+      # `index.html` es `noindex, follow`, cualquier URL que caiga aquí
+      # queda fuera del índice mientras Angular la renderiza.
+      #
+      # Por qué NO se devuelve un 404 real: en un static site de Render no
+      # existe una regla que fije el status 404, y el catch-all es
+      # imprescindible para el deep-linking del SPA (las invitaciones son
+      # rutas dinámicas `/:slug` que no se pueden enumerar aquí: cada
+      # cliente nuevo trae la suya). El `noindex` + canonical por ruta lo
+      # resuelve en la capa de aplicación, que es lo que Google respeta.
       - type: rewrite
         source: "/*"
-        destination: "/index.html"
+        destination: "/index.csr.html"
 
     # -------------------------------------------------------------------------
     # #1 y #5 — Cabeceras de seguridad del frontend

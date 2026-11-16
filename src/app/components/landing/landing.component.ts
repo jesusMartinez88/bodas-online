@@ -225,6 +225,10 @@ export class LandingComponent implements OnInit {
       keywords:
         'invitación de boda digital, RSVP online, gestión de mesas boda, invitación web boda, boda online',
       canonical,
+      // La landing es la única página del sitio que se quiere indexada.
+      // El `index.html` estático arranca en `noindex` (se sirve para
+      // cualquier ruta del SPA), así que hay que declararlo explícito.
+      robots: 'index, follow',
       image: ogImage,
       og: {
         type: 'website',

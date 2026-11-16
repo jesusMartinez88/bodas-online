@@ -3,6 +3,7 @@ import {
   Component,
   OnInit,
   computed,
+  inject,
   input,
 } from '@angular/core';
 import AOS from 'aos';
@@ -17,6 +18,7 @@ import { GiftsComponent } from '../../gifts/gifts.component';
 import { ContactComponent } from '../../contact/contact.component';
 import { CalendarComponent } from '../../calendar/calendar.component';
 import { InvitationFooterComponent } from '../../../shared/components/invitation-footer/invitation-footer.component';
+import { SeoService } from '../../../services/seo.service';
 
 /**
  * Plantilla genérica de invitación de boda.
@@ -47,9 +49,10 @@ import { InvitationFooterComponent } from '../../../shared/components/invitation
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InvitationTemplateComponent implements OnInit {
+  private readonly seo = inject(SeoService);
+
   /** Slug del usuario (identificador de la boda; coincide con la URL pública) */
   readonly slug = input.required<string>();
-
   /** Nombre de la primera persona de la pareja */
   readonly partner1Name = input.required<string>();
 
@@ -65,10 +68,37 @@ export class InvitationTemplateComponent implements OnInit {
   );
 
   async ngOnInit() {
+    this.applySeo();
     AOS.init({
       duration: 1000,
       once: true,
       easing: 'ease-out-cubic',
+    });
+  }
+
+  /**
+   * SEO de la invitación.
+   *
+   * Cada invitación es una URL pública propia (`/<slug>`) que se comparte
+   * por WhatsApp: por eso declara su propio `title`, `description` y
+   * `canonical` (el de la invitación, no el de la home). Sin esto, todas
+   * las invitaciones heredaban el `<title>` y el canonical de la landing y
+   * Google las consolidaba en un único documento.
+   *
+   * `index, follow`: son contenido público real. Las invitaciones que no
+   * existen caen en `InvitationNotFoundComponent`, que sí va en
+   * `noindex, follow`.
+   */
+  private applySeo(): void {
+    const slug = this.slug();
+    const couple = `${this.partner1Name()} y ${this.partner2Name()}`;
+
+    this.seo.update({
+      title: `Boda de ${couple} · Invitación online`,
+      description: `Invitación digital de la boda de ${couple}: confirma tu asistencia, consulta el cronograma, el mapa del evento y la lista de música.`,
+      canonical: `https://tubodaonline.onrender.com/${slug}`,
+      robots: 'index, follow',
+      image: `https://tubodaonline.onrender.com/assets/${slug}/covery/hero.jpeg`,
     });
   }
 }

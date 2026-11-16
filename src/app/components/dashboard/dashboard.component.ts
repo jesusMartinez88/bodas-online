@@ -19,6 +19,7 @@ import { ExitConfirmService } from '../../services/exit-confirm.service';
 import { ExitConfirmModalComponent } from '../../shared/components/exit-confirm-modal/exit-confirm-modal.component';
 import { InstallBannerComponent } from '../../shared/components/install-banner/install-banner.component';
 import { InvitationEditorComponent } from './invitation-editor/invitation-editor.component';
+import { SeoService } from '../../services/seo.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -48,6 +49,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private versionService = inject(VersionService);
   private route = inject(ActivatedRoute);
   exitConfirmService = inject(ExitConfirmService);
+  private seo = inject(SeoService);
 
   tenant = signal<string>('');
   stats = signal<WeddingStats | null>(null);
@@ -194,6 +196,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isSidebarCollapsed = signal(false);
 
   ngOnInit() {
+    // El panel es privado: nunca debe indexarse ni seguirse como
+    // contenido (`/<tenant>/dashboard` es una URL por cliente).
+    this.seo.update({
+      title: 'Panel de la boda · Tu Boda Online',
+      robots: 'noindex, nofollow',
+    });
+
     this.tenant.set(this.route.snapshot.paramMap.get('tenant') || '');
     this.loadStats();
     this.settingsService.loadSettings().subscribe();
